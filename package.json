@@ -1,0 +1,23 @@
+{
+  "name": "adrik.me",
+  "version": "1.0.0",
+  "description": "This is Adrik Grigorian's personal website.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \\\"Error: there are no tests\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dotbatch/adrik.me.git"
+  },
+  "keywords": [
+    "adrik",
+    "grigorian"
+  ],
+  "author": "Adrik Shant Grigorian",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dotbatch/adrik.me/issues"
+  },
+  "homepage": "https://github.com/dotbatch/adrik.me#readme"
+}
