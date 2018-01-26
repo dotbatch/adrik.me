@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/dotbatch/adrik.me/issues"
   },
-  "homepage": "https://github.com/dotbatch/adrik.me#readme"
+  "homepage": "https://github.com/dotbatch/adrik.me#readme",
+  "devDependencies": {
+    "webpack": "^3.10.0"
+  }
 }
