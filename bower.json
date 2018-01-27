@@ -1,0 +1,24 @@
+{
+  "name": "Adrik.me",
+  "homepage": "https://github.com/dotbatch/adrik.me",
+  "authors": [
+    "Adrik Grigorian <asg102@gmail.com>"
+  ],
+  "description": "Adrik Grigorian's personal website.",
+  "main": "index.html",
+  "keywords": [
+    "adrik",
+    "grigorian"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "typed.js": "^2.0.6"
+  }
+}
