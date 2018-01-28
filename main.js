@@ -1,20 +1,25 @@
 //declarations
-var $window = $(window),
-    $body = $('body');
+var $window = $(window);
 
 //resize splash of image
 var bg = $('#splash');
 function resizeBackground() {
-    bg.height(jQuery(window).height());
+    bg.height($window.height());
 }
 resizeBackground();
+
+//resize splash div on resize
+$(window).on('resize', function(){
+    resizeBackground();
+});
 
 
 //Typed.Js to give page some animation
 var options = {
-    strings: ['Adrik Grigorian.', 'Designer.', 'Developer.', 'Gamer.', 'Adrik Grigrorian.'],
+    strings: ['Adrik Grigorian.', 'Designer.', 'Developer.', 'Gamer.', 'Adrik Grigorian.'],
     typeSpeed: 100,
-    loop: false,
-}
+    loop: false
+};
 
-var typed = new Typed('.element', options);
+//Instantiate typed.js with options
+new Typed('.element', options);
