@@ -4,7 +4,7 @@ and personal quotes.
 
 
 # Technologies
-* Typed.JS
+* Typed.js
 * Bower
 * Bootstrap
 * Jquery 
