@@ -1,5 +1,5 @@
 # adrik.me
-Adrik Grigorian's personal website. Minimal simple website only show casing my Linked in profile link
+Adrik Grigorian's personal website. Minimal website showcasing my Linked in profile link
 and personal quotes. 
 
 
