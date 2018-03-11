@@ -14,7 +14,7 @@ $(window).on('resize', function(){
 });
 
 
-//Typed.Js to give page some animation
+//Typed.Js
 var options = {
     strings: ['Adrik Grigorian.', 'a Developer.', 'a Designer.', 'a Gamer.', 'Adrik Grigorian.'],
     typeSpeed: 100,
