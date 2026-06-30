@@ -1,4 +1,7 @@
-.idea/
-Adrik.me.iml
-node_modules/
-bower_components/
+# Local FTP credentials for scripts/deploy.ps1 — never commit
+.env.deploy
+.DS_Store
+Thumbs.db
+
+# Local editor/preview config
+.claude/
