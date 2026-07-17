@@ -67,28 +67,36 @@
     <!-- Hero -->
     <section class="hero">
       <div class="hero__bg" aria-hidden="true"></div>
-      <div class="wrap hero__inner">
-        <div class="hero__copy">
-          <p class="status reveal"><span class="status__dot"></span>online · Austin, TX · <span class="clock">--:--</span> CT</p>
-          <h1 class="hero__title reveal">
-            Hi, I'm Adrik.
-            <span class="hero__rotate">I'm <span class="rotator" aria-live="polite">a technical lead manager.</span></span>
-          </h1>
-          <p class="hero__lede reveal">
-            I lead engineering teams at <strong>General Motors</strong>, building the secure systems that keep
-            millions of vehicles connected. I measure my success by the number of people I positively impact.
-          </p>
-          <div class="hero__cta reveal">
-            <a class="btn btn--primary" href="https://www.linkedin.com/in/adrik-grigorian/" target="_blank" rel="noopener">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.5h4V21H3zM9.5 9.5h3.8v1.6h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.1c0-1.22-.02-2.78-1.7-2.78-1.7 0-1.95 1.32-1.95 2.7V21h-4z"/></svg>
-              Connect on LinkedIn
-            </a>
-            <a class="btn btn--ghost" href="#about">More about me</a>
-          </div>
-        </div>
+      <canvas class="hero__canvas" id="hero-canvas" aria-hidden="true"></canvas>
+      <p class="hero__hint" aria-hidden="true"><span class="hero__hint-drag">drag to spin · </span>tap the things</p>
+      <div class="hero__toast" id="hero-toast" role="status" aria-live="polite"></div>
 
+      <div class="wrap hero__overlay">
+        <p class="status reveal"><span class="status__dot"></span>online · Austin, TX · <span class="clock">--:--</span> CT</p>
+        <h1 class="hero__title reveal">
+          Hi, I'm Adrik Grigorian.
+          <span class="hero__rotate">I'm <span class="rotator" aria-live="polite">a technical lead manager.</span></span>
+        </h1>
+        <p class="hero__lede reveal">
+          I lead engineering teams at <strong>General Motors</strong>, building the secure systems that keep
+          millions of vehicles connected.
+        </p>
+        <div class="hero__cta reveal">
+          <a class="btn btn--primary" href="https://www.linkedin.com/in/adrik-grigorian/" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.5h4V21H3zM9.5 9.5h3.8v1.6h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.1c0-1.22-.02-2.78-1.7-2.78-1.7 0-1.95 1.32-1.95 2.7V21h-4z"/></svg>
+            Connect on LinkedIn
+          </a>
+          <a class="btn btn--ghost" href="#about">More about me</a>
+        </div>
+      </div>
+      <a class="hero__scroll" href="#about" aria-label="Scroll to About"><span></span></a>
+    </section>
+
+    <!-- About -->
+    <section class="section" id="about">
+      <div class="wrap about">
         <!-- Instrument cluster -->
-        <div class="dash reveal" role="group" aria-label="Adrik's dashboard">
+        <div class="dash about__dash reveal" role="group" aria-label="Adrik's dashboard">
           <div class="dash__top">
             <span class="dash__brand">AG·OS</span>
             <span class="dash__gear" aria-label="Gear: drive">P R N <b>D</b></span>
@@ -130,16 +138,6 @@
             <div><dt>range</dt><dd>∞<small> curiosity</small></dd></div>
           </dl>
         </div>
-      </div>
-      <a class="hero__scroll" href="#about" aria-label="Scroll to About"><span></span></a>
-    </section>
-
-    <!-- About -->
-    <section class="section" id="about">
-      <div class="wrap about">
-        <figure class="about__photo reveal">
-          <img src="assets/img/portrait.jpg" alt="Adrik Grigorian standing by the water at dusk" width="677" height="677" loading="lazy">
-        </figure>
         <div class="about__text">
           <p class="eyebrow reveal">About</p>
           <h2 class="reveal">Engineer by trade, people-person by nature.</h2>
@@ -154,11 +152,6 @@
             for local businesses around Houston. That's where I learned that great technology is really about
             helping people.
           </p>
-          <ul class="stats reveal">
-            <li><strong>13+</strong><span>years at GM</span></li>
-            <li><strong>30M+</strong><span>secure requests a day</span></li>
-            <li><strong>50+</strong><span>services modernized</span></li>
-          </ul>
         </div>
       </div>
     </section>
@@ -306,7 +299,16 @@
     </div>
   </footer>
 
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
   <script src="assets/js/main.js" defer></script>
+  <script type="module" src="assets/js/hero3d.js"></script>
   <script src="assets/js/dash.js" defer></script>
 </body>
 </html>

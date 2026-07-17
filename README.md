@@ -8,7 +8,7 @@ Plain HTML, CSS and JavaScript. No build step, no frameworks: everything that sh
 public/
   index.html          the whole site
   assets/css/         styles (light + dark themes)
-  assets/js/          main.js (effects, theme, easter eggs) + dash.js (hero instrument cluster)
+  assets/js/          main.js (effects, theme, easter eggs), hero3d.js (three.js hero), dash.js (About dashboard)
   assets/img/         hero.jpg, portrait.jpg, favicon.svg
   .htaccess           HTTPS redirect, caching, security headers
 scripts/deploy.ps1    manual FTP deploy
@@ -56,5 +56,7 @@ Copy-Item .env.deploy.example .env.deploy   # then fill it in; it is git-ignored
 
 - Text lives directly in `public/index.html` (sections: About, Work, Life, Contact).
 - The rotating hero phrases are the `phrases` array in `public/assets/js/main.js`.
-- Dashboard indicator lights: each button's `data-msg` in the hero of `public/index.html` is the text it shows.
+- 3D hero: hobby objects, their positions and click messages are `MESSAGES` / `layout` in `public/assets/js/hero3d.js`.
+  three.js loads from the jsDelivr CDN via the import map in `index.html`.
+- Dashboard indicator lights: each button's `data-msg` in the About section of `public/index.html` is the text it shows.
 - Swap photos by replacing `public/assets/img/portrait.jpg` (square) and `hero.jpg` (wide).

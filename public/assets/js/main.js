@@ -119,6 +119,7 @@
 
   // ---- Party mode: Konami code ----
   window.adrikParty = function () {
+    window.dispatchEvent(new CustomEvent('adrik:party'));
     if (reduceMotion) return;
     var emoji = ['🏀', '🚗', '🚴', '💻', '🎬', '❤️', '🏎️', '⚡'];
     var layer = document.createElement('div');
