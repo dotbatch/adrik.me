@@ -1,74 +1,75 @@
-// Instrument cluster in the hero: a live-ish gauge, odometer and indicator lights.
+// Instrument cluster in About: an arc gauge, a running counter and indicator lights.
 (function () {
   'use strict';
 
-  var needle = document.getElementById('dash-needle');
   var arc = document.getElementById('dash-value');
-  var ticks = document.getElementById('dash-ticks');
+  var dot = document.getElementById('dash-dot');
   var rpsEl = document.getElementById('dash-rps');
   var odo = document.getElementById('dash-odo');
   var lcd = document.getElementById('dash-lcd');
-  if (!needle || !odo) return;
+  var timeEl = document.getElementById('dash-time');
+  if (!arc || !odo) return;
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var MAX = 600;                  // gauge full scale, requests/sec
   var AVG = 30000000 / 86400;     // ~30M requests a day ≈ 347/sec
   var SWEEP = 240;                // degrees, -120 → +120
+  var CX = 110, CY = 110, R = 90; // arc geometry from the SVG path
 
-  // ---- Draw tick marks and labels ----
-  var NS = 'http://www.w3.org/2000/svg';
-  for (var v = 0; v <= MAX; v += 25) {
-    var a = (-SWEEP / 2 + SWEEP * v / MAX) * Math.PI / 180;
-    var major = v % 100 === 0;
-    var r1 = major ? 72 : 77, r2 = 82;
-    var line = document.createElementNS(NS, 'line');
-    line.setAttribute('x1', 110 + r1 * Math.sin(a));
-    line.setAttribute('y1', 110 - r1 * Math.cos(a));
-    line.setAttribute('x2', 110 + r2 * Math.sin(a));
-    line.setAttribute('y2', 110 - r2 * Math.cos(a));
-    if (major) line.setAttribute('class', 'major');
-    ticks.appendChild(line);
-    if (major) {
-      var t = document.createElementNS(NS, 'text');
-      t.setAttribute('x', 110 + 60 * Math.sin(a));
-      t.setAttribute('y', 110 - 60 * Math.cos(a) + 3);
-      t.textContent = v / 100;
-      ticks.appendChild(t);
-    }
-  }
+  // ---- Gauge: ease the shown value toward a target every frame ----
+  var shown = 0, target = 0;
 
-  // ---- Gauge ----
-  function setGauge(value) {
+  function draw(value) {
     var pct = Math.max(0, Math.min(1, value / MAX));
-    needle.style.transform = 'rotate(' + (-SWEEP / 2 + SWEEP * pct) + 'deg)';
+    var a = (-SWEEP / 2 + SWEEP * pct) * Math.PI / 180;
     arc.style.strokeDashoffset = String(100 - pct * 100);
+    dot.setAttribute('cx', (CX + R * Math.sin(a)).toFixed(2));
+    dot.setAttribute('cy', (CY - R * Math.cos(a)).toFixed(2));
     rpsEl.textContent = Math.round(value);
   }
 
-  setGauge(0);
-  var current = AVG;
-  function wobble() {
-    // drift around the daily average like real traffic
-    current += (Math.random() - 0.5) * 60 + (AVG - current) * 0.25;
-    setGauge(current);
+  function animate() {
+    shown += (target - shown) * 0.06;
+    draw(shown);
+    if (Math.abs(target - shown) > 0.3) requestAnimationFrame(animate);
+    else { shown = target; draw(shown); animating = false; }
+  }
+  var animating = false;
+  function setTarget(v) {
+    target = v;
+    if (reduceMotion) { shown = v; draw(v); return; }
+    if (!animating) { animating = true; requestAnimationFrame(animate); }
   }
 
-  // ---- Odometer: estimated requests since midnight in Austin ----
-  function secondsSinceMidnightCT() {
+  draw(0);
+  tick();
+  setInterval(tick, 1000);
+
+  function wobble() {
+    // drift around the daily average like real traffic
+    setTarget(Math.max(240, Math.min(460, target + (Math.random() - 0.5) * 70 + (AVG - target) * 0.3)));
+  }
+
+  // ---- Counter: estimated requests since midnight in Austin ----
+  function austinNow() {
     try {
       var parts = new Intl.DateTimeFormat('en-US', {
         timeZone: 'America/Chicago', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit'
       }).formatToParts(new Date());
       var get = function (type) { return +parts.filter(function (p) { return p.type === type; })[0].value; };
-      return (get('hour') % 24) * 3600 + get('minute') * 60 + get('second');
+      return { h: get('hour') % 24, m: get('minute'), s: get('second') };
     } catch (e) {
       var d = new Date();
-      return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+      return { h: d.getHours(), m: d.getMinutes(), s: d.getSeconds() };
     }
   }
-  function tickOdo() {
-    var n = Math.floor(secondsSinceMidnightCT() * AVG);
-    odo.textContent = n.toLocaleString('en-US').padStart(10, '0');
+  function tick() {
+    var t = austinNow();
+    odo.textContent = Math.floor((t.h * 3600 + t.m * 60 + t.s) * AVG).toLocaleString('en-US');
+    if (timeEl) {
+      var h12 = t.h % 12 || 12;
+      timeEl.textContent = h12 + ':' + String(t.m).padStart(2, '0') + (t.h < 12 ? ' AM' : ' PM');
+    }
   }
 
   // ---- Indicator lights ----
@@ -83,7 +84,7 @@
     });
     lcd.textContent = btn ? btn.getAttribute('data-msg') : idle;
     lcd.classList.remove('flash');
-    void lcd.offsetWidth; // restart the flash animation
+    void lcd.offsetWidth; // restart the fade
     lcd.classList.add('flash');
   }
 
@@ -103,29 +104,22 @@
     show(lights[autoIndex]);
   }
 
-  // ---- Start when the cluster is on screen: needle sweep, then idle ----
+  // ---- Start when the cluster is on screen ----
   var started = false;
   function start() {
     if (started) return;
     started = true;
-    tickOdo();
-    setInterval(tickOdo, 1000);
-    if (reduceMotion) { setGauge(AVG); return; }
-
-    // classic ignition sweep: full scale and back
-    setGauge(MAX);
-    setTimeout(function () {
-      setGauge(AVG);
-      setInterval(wobble, 900);
-      autoTimer = setInterval(autoCycle, 2600);
-    }, 900);
+    setTarget(AVG);
+    if (reduceMotion) return;
+    setInterval(wobble, 1400);
+    autoTimer = setInterval(autoCycle, 3200);
   }
 
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (entries) {
       if (entries[0].isIntersecting) { start(); io.disconnect(); }
-    }, { threshold: 0.3 });
-    io.observe(odo);
+    }, { threshold: 0.25 });
+    io.observe(arc.ownerSVGElement);
   } else {
     start();
   }
