@@ -23,7 +23,7 @@
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css">
 
   <script type="application/ld+json">
@@ -98,44 +98,42 @@
         <!-- Instrument cluster -->
         <div class="dash about__dash reveal" role="group" aria-label="Adrik's dashboard">
           <div class="dash__top">
-            <span class="dash__brand">AG·OS</span>
-            <span class="dash__gear" aria-label="Gear: drive">P R N <b>D</b></span>
+            <span class="dash__gear" aria-label="Gear: drive">D</span>
+            <span class="dash__time" id="dash-time">--:--</span>
           </div>
 
           <div class="dash__gauge">
             <svg viewBox="0 0 220 165" aria-hidden="true">
-              <g class="dash__ticks" id="dash-ticks"></g>
               <path class="dash__track" d="M 32.06 155 A 90 90 0 1 1 187.94 155"/>
               <path class="dash__value" id="dash-value" d="M 32.06 155 A 90 90 0 1 1 187.94 155" pathLength="100"/>
-              <g class="dash__needle" id="dash-needle"><line x1="110" y1="110" x2="110" y2="36"/><circle cx="110" cy="110" r="7"/></g>
+              <circle class="dash__dot" id="dash-dot" r="5" cx="32.06" cy="155"/>
             </svg>
             <div class="dash__readout">
               <span class="dash__big" id="dash-rps">347</span>
-              <span class="dash__unit">secure req/s</span>
+              <span class="dash__unit">secure requests / sec</span>
             </div>
           </div>
 
           <div class="dash__odo">
-            <span class="dash__label">today</span>
-            <span class="dash__digits" id="dash-odo">00,000,000</span>
-            <span class="dash__label">signed &amp; verified</span>
+            <span class="dash__digits" id="dash-odo">0</span>
+            <span class="dash__label">signed &amp; verified today</span>
           </div>
 
           <div class="dash__lights" role="toolbar" aria-label="What I'm into">
-            <button type="button" data-msg="DRIVE MODE: SPORT · lifelong car guy" aria-label="Cars"><svg viewBox="0 0 24 24"><path d="M5 16h14M3 13l2-5a2 2 0 0 1 1.9-1.3h10.2A2 2 0 0 1 19 8l2 5v4a1 1 0 0 1-1 1h-1M3 13v4a1 1 0 0 0 1 1h1"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/></svg></button>
-            <button type="button" data-msg="CADENCE 90 RPM · head: cleared" aria-label="Biking"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h6l3.5 7.5M9 9 12 16.5h-6.5M15 9l-1.5-3H11M12 16.5 15 9"/></svg></button>
-            <button type="button" data-msg="FT% TRENDING UP · next run: tonight" aria-label="Basketball"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 2.6 3 10.2 0 12.8M18.4 5.6c-3 2.6-3 10.2 0 12.8"/></svg></button>
-            <button type="button" data-msg="FIRMWARE: always updating" aria-label="Tech"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M8 9l-2 1.5L8 12M16 9l2 1.5L16 12M13 8.5l-2 4"/></svg></button>
-            <button type="button" data-msg="NOW SHOWING: a rewatch, again" aria-label="Movies"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="m3 7 3.5-3.5M9 7l3.5-3.5M15 7l3.5-3.5M3 11h18"/></svg></button>
-            <button type="button" data-msg="PRIORITY 1: FAMILY · uptime 100%" aria-label="Family"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>
-            <button type="button" data-msg="ASSIST MODE: ON · ask me anything" aria-label="Helping others"><svg viewBox="0 0 24 24"><path d="M7 11V7a2 2 0 0 1 4 0v3M11 10V5.5a2 2 0 0 1 4 0V10M15 10V7a2 2 0 0 1 4 0v6a7 7 0 0 1-7 7h-1a6 6 0 0 1-5.2-3L3.6 13.3a1.8 1.8 0 0 1 3-2L7 12"/></svg></button>
+            <button type="button" data-msg="Sport mode · lifelong car guy" aria-label="Cars"><svg viewBox="0 0 24 24"><path d="M5 16h14M3 13l2-5a2 2 0 0 1 1.9-1.3h10.2A2 2 0 0 1 19 8l2 5v4a1 1 0 0 1-1 1h-1M3 13v4a1 1 0 0 0 1 1h1"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/></svg></button>
+            <button type="button" data-msg="90 rpm cadence · head cleared" aria-label="Biking"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h6l3.5 7.5M9 9 12 16.5h-6.5M15 9l-1.5-3H11M12 16.5 15 9"/></svg></button>
+            <button type="button" data-msg="Free throws trending up · next run tonight" aria-label="Basketball"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 2.6 3 10.2 0 12.8M18.4 5.6c-3 2.6-3 10.2 0 12.8"/></svg></button>
+            <button type="button" data-msg="Software update available · always" aria-label="Tech"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M8 9l-2 1.5L8 12M16 9l2 1.5L16 12M13 8.5l-2 4"/></svg></button>
+            <button type="button" data-msg="Now playing · a rewatch, again" aria-label="Movies"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="m3 7 3.5-3.5M9 7l3.5-3.5M15 7l3.5-3.5M3 11h18"/></svg></button>
+            <button type="button" data-msg="Priority one · family" aria-label="Family"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>
+            <button type="button" data-msg="Assist mode on · ask me anything" aria-label="Helping others"><svg viewBox="0 0 24 24"><path d="M7 11V7a2 2 0 0 1 4 0v3M11 10V5.5a2 2 0 0 1 4 0V10M15 10V7a2 2 0 0 1 4 0v6a7 7 0 0 1-7 7h-1a6 6 0 0 1-5.2-3L3.6 13.3a1.8 1.8 0 0 1 3-2L7 12"/></svg></button>
           </div>
-          <div class="dash__lcd" id="dash-lcd" aria-live="polite">SYSTEMS NOMINAL · all teams green</div>
+          <p class="dash__lcd" id="dash-lcd" aria-live="polite">All systems nominal</p>
 
           <dl class="dash__trip">
-            <div><dt>trip a</dt><dd>13<small> yrs @ GM</small></dd></div>
-            <div><dt>trip b</dt><dd>25<small> yrs shipping</small></dd></div>
-            <div><dt>range</dt><dd>∞<small> curiosity</small></dd></div>
+            <div><dt>At GM</dt><dd>13<small>yrs</small></dd></div>
+            <div><dt>Shipping</dt><dd>25<small>yrs</small></dd></div>
+            <div><dt>Curiosity</dt><dd>∞</dd></div>
           </dl>
         </div>
         <div class="about__text">
