@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Drive — adrik.me</title>
+  <meta name="description" content="An experimental, drivable version of adrik.me. Take a little car around Adrik Grigorian's world.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f3c899">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #2a1f17;
+      --paper: #fff8ef;
+      --accent: #ff6a2b;
+      --sand: #f3c899;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: var(--sand); color: var(--ink); font-family: "Inter", system-ui, sans-serif; }
+    #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+
+    .hud { position: fixed; z-index: 2; pointer-events: none; font: 500 12px/1.4 "JetBrains Mono", ui-monospace, monospace; }
+    .hud a, .hud button { pointer-events: auto; }
+    .hud--top { top: 16px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px;
+      background: rgba(255, 248, 239, .85); border: 0; color: var(--ink); text-decoration: none;
+      box-shadow: 0 6px 20px -10px rgba(60, 30, 0, .45); font: inherit; cursor: pointer;
+    }
+    .chip b { color: var(--accent); }
+    .hud--keys { bottom: 16px; left: 16px; color: rgba(42, 31, 23, .75); }
+    .hud--keys kbd {
+      display: inline-block; min-width: 22px; padding: 2px 6px; margin: 0 1px; text-align: center;
+      border-radius: 6px; background: var(--paper); box-shadow: 0 2px 0 rgba(60, 30, 0, .25); font: inherit;
+    }
+
+    .prompt {
+      position: fixed; z-index: 3; left: 50%; bottom: 96px; transform: translate(-50%, 20px);
+      opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
+    }
+    .prompt.is-visible { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+    .prompt button {
+      padding: 14px 22px; border: 0; border-radius: 999px; cursor: pointer;
+      background: var(--ink); color: var(--paper); font: 600 15px/1 "Inter", sans-serif;
+      box-shadow: 0 12px 30px -12px rgba(0, 0, 0, .6);
+    }
+
+    .intro {
+      position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 16px;
+      background: radial-gradient(circle at 50% 40%, rgba(255, 248, 239, .75), rgba(243, 200, 153, .92));
+      transition: opacity .6s;
+    }
+    .intro.is-hidden { opacity: 0; pointer-events: none; }
+    .intro__card { max-width: 420px; text-align: center; }
+    .intro h1 { margin: 0 0 8px; font-size: clamp(2.2rem, 8vw, 3.4rem); font-weight: 800; letter-spacing: -.04em; }
+    .intro p { margin: 0 0 22px; color: rgba(42, 31, 23, .75); line-height: 1.55; }
+    .intro .tag { display: inline-block; margin-bottom: 14px; padding: 4px 10px; border-radius: 999px; background: var(--ink); color: var(--paper); font: 500 11px/1.4 "JetBrains Mono", monospace; }
+    .intro button {
+      padding: 16px 28px; border: 0; border-radius: 999px; cursor: pointer;
+      background: var(--accent); color: #fff; font: 700 16px/1 "Inter", sans-serif;
+      box-shadow: 0 14px 30px -12px rgba(255, 106, 43, .9);
+    }
+    .intro button:disabled { opacity: .5; cursor: progress; box-shadow: none; }
+    .intro small { display: block; margin-top: 18px; color: rgba(42, 31, 23, .6); font-size: 12px; }
+
+    /* Touch controls */
+    .pad { position: fixed; z-index: 2; bottom: max(16px, env(safe-area-inset-bottom)); display: none; gap: 10px; }
+    .pad--left { left: 16px; }
+    .pad--right { right: 16px; flex-direction: column-reverse; }
+    .pad button {
+      width: 68px; height: 68px; border: 0; border-radius: 50%;
+      background: rgba(255, 248, 239, .85); color: var(--ink); font-size: 26px;
+      box-shadow: 0 6px 20px -10px rgba(60, 30, 0, .5);
+      touch-action: none; user-select: none; -webkit-user-select: none;
+    }
+    .pad button.is-down { background: var(--ink); color: var(--paper); }
+    @media (pointer: coarse) {
+      .pad { display: flex; }
+      .hud--keys { display: none; }
+      .prompt { bottom: 180px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="scene" tabindex="0" aria-label="3D world with a drivable car"></canvas>
+
+  <div class="hud hud--top">
+    <a class="chip" href="../">← adrik<b>.</b>me</a>
+    <button class="chip" type="button" id="reset">reset car ⟲</button>
+  </div>
+
+  <div class="hud hud--keys" aria-hidden="true">
+    <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows to drive · <kbd>space</kbd> brake · <kbd>R</kbd> reset
+  </div>
+
+  <div class="prompt" id="prompt"><button type="button" id="prompt-btn">Open</button></div>
+
+  <div class="pad pad--left" aria-hidden="true">
+    <button type="button" data-key="left">◀</button>
+    <button type="button" data-key="right">▶</button>
+  </div>
+  <div class="pad pad--right" aria-hidden="true">
+    <button type="button" data-key="back">▼</button>
+    <button type="button" data-key="forward">▲</button>
+  </div>
+
+  <div class="intro" id="intro">
+    <div class="intro__card">
+      <span class="tag">experimental</span>
+      <h1>adrik.me / drive</h1>
+      <p>Take a little car for a spin around my world. Knock over my name, push some basketballs around, and find out what I'm up to on the signs.</p>
+      <button type="button" id="start" disabled>Loading…</button>
+      <small>Works best on a laptop or desktop with a keyboard.</small>
+    </div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+      "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+    }
+  }
+  </script>
+  <script type="module" src="drive.js"></script>
+</body>
+</html>
