@@ -11,6 +11,7 @@ public/
   assets/js/          main.js (effects, theme, easter eggs), hero3d.js (three.js hero), dash.js (About dashboard)
   assets/img/         hero.jpg, portrait.jpg, favicon.svg
   .htaccess           HTTPS redirect, caching, security headers
+  drive/              experimental drivable 3D world (adrik.me/drive/), three.js + cannon-es
 scripts/deploy.ps1    manual FTP deploy
 .github/workflows/    automatic deploy on push to main
 ```
@@ -60,3 +61,10 @@ Copy-Item .env.deploy.example .env.deploy   # then fill it in; it is git-ignored
   three.js loads from the jsDelivr CDN via the import map in `index.html`.
 - Dashboard indicator lights: each button's `data-msg` in the About section of `public/index.html` is the text it shows.
 - Swap photos by replacing `public/assets/img/portrait.jpg` (square) and `hero.jpg` (wide).
+
+## Drive mode (experimental)
+
+`public/drive/` is a separate page, inspired by bruno-simon.com: drive a little car around, knock over the
+3D name, push basketballs, read the signs. All of it is built in `public/drive/drive.js` from primitive
+shapes; three.js and cannon-es (physics) load from jsDelivr. It is `noindex` while it's experimental and is
+linked from the main site's footer.
