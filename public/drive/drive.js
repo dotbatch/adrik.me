@@ -165,8 +165,11 @@ for (const [x, z, w, d] of [[0, -60, 140, 1], [0, 60, 140, 1], [-70, 0, 1, 120],
 // ---------------------------------------------------------------------------
 const SPAWN = new CANNON.Vec3(4, 1.6, 0);
 
-const chassisBody = new CANNON.Body({ mass: 150, angularDamping: 0.5, linearDamping: 0.05 });
-chassisBody.addShape(new CANNON.Box(new CANNON.Vec3(1.1, 0.3, 0.55)));
+// The box sits COM_DROP above the body's origin, which puts the centre of mass
+// down near the axles. A low centre of mass is what keeps a car from tipping.
+const COM_DROP = 0.35;
+const chassisBody = new CANNON.Body({ mass: 150, angularDamping: 0.7, linearDamping: 0.08 });
+chassisBody.addShape(new CANNON.Box(new CANNON.Vec3(1.1, 0.3, 0.55)), new CANNON.Vec3(0, COM_DROP, 0));
 chassisBody.position.copy(SPAWN);
 chassisBody.allowSleep = false;
 
@@ -175,20 +178,20 @@ const vehicle = new CANNON.RaycastVehicle({ chassisBody, indexRightAxis: 2, inde
 const wheelOptions = {
   radius: 0.34,
   directionLocal: new CANNON.Vec3(0, -1, 0),
-  suspensionStiffness: 32,
-  suspensionRestLength: 0.32,
-  frictionSlip: 1.6,
-  dampingRelaxation: 2.3,
-  dampingCompression: 4.4,
+  suspensionStiffness: 45,
+  suspensionRestLength: 0.3,
+  frictionSlip: 2.4,
+  dampingRelaxation: 3,
+  dampingCompression: 4.8,
   maxSuspensionForce: 100000,
-  rollInfluence: 0.02,
+  rollInfluence: 0,
   axleLocal: new CANNON.Vec3(0, 0, 1),
   chassisConnectionPointLocal: new CANNON.Vec3(),
   maxSuspensionTravel: 0.3,
   customSlidingRotationalSpeed: -30,
   useCustomSlidingRotationalSpeed: true
 };
-const WHEEL_POS = [[-0.72, 0, 0.62], [-0.72, 0, -0.62], [0.72, 0, 0.62], [0.72, 0, -0.62]]; // FL FR RL RR
+const WHEEL_POS = [[-0.8, COM_DROP, 0.68], [-0.8, COM_DROP, -0.68], [0.8, COM_DROP, 0.68], [0.8, COM_DROP, -0.68]]; // FL FR RL RR
 for (const [x, y, z] of WHEEL_POS) {
   wheelOptions.chassisConnectionPointLocal.set(x, y, z);
   vehicle.addWheel(wheelOptions);
@@ -215,6 +218,7 @@ for (const z of [0.4, -0.4]) {
   tail.position.set(1.16, 0.12, z);
   carMesh.add(lamp, tail);
 }
+carMesh.children.forEach((c) => { c.position.y += COM_DROP; });
 shadowed(carMesh);
 scene.add(carMesh);
 
@@ -277,26 +281,66 @@ document.querySelectorAll('.pad [data-key]').forEach((btn) => {
 });
 document.getElementById('reset').addEventListener('click', () => { resetCar(); canvas.focus(); });
 
-const MAX_FORCE = 900;
-const MAX_STEER = 0.55;
-const MAX_SPEED = 17;
+const MAX_FORCE = 700;      // total engine force, split across all four wheels
+const MAX_STEER = 0.5;      // radians at a standstill
+const MAX_SPEED = 15;       // m/s forward
+const MAX_REVERSE = 6;      // m/s backward
 let steer = 0;
+let throttle = 0;
+
+const _fwd = new CANNON.Vec3();
+function forwardSpeed() {
+  chassisBody.quaternion.vmult(new CANNON.Vec3(-1, 0, 0), _fwd);
+  return chassisBody.velocity.dot(_fwd);
+}
 
 function drive(dt) {
-  const speed = chassisBody.velocity.length();
-  let force = 0;
-  if (input.forward && speed < MAX_SPEED) force = -MAX_FORCE;
-  if (input.back) force = MAX_FORCE * 0.6;
-  for (const i of [2, 3]) vehicle.applyEngineForce(force, i);
+  const v = forwardSpeed();
 
-  const target = input.left ? MAX_STEER : input.right ? -MAX_STEER : 0;
-  steer += (target - steer) * Math.min(1, dt * 10);
+  // Pressing the opposite way while still rolling brakes first instead of
+  // slamming into reverse, which is what used to pitch the car over.
+  let want = 0, brake = 0;
+  if (input.forward) { if (v < -1) brake = 6; else if (v < MAX_SPEED) want = 1; }
+  if (input.back) { if (v > 1) brake = 6; else if (v > -MAX_REVERSE) want = -0.6; }
+  if (input.brake) brake = 10;
+  if (!input.forward && !input.back && !input.brake) brake = 0.8; // gentle coast-down
+
+  // Ease into the throttle so launches don't lift the nose
+  throttle += (want - throttle) * Math.min(1, dt * (want === 0 ? 8 : 3));
+  const force = -throttle * MAX_FORCE;
+  vehicle.applyEngineForce(force * 0.4, 0);
+  vehicle.applyEngineForce(force * 0.4, 1);
+  vehicle.applyEngineForce(force * 0.6, 2);
+  vehicle.applyEngineForce(force * 0.6, 3);
+
+  // Less steering lock the faster you go, eased in and out
+  const lock = MAX_STEER * (1 - 0.6 * Math.min(1, Math.abs(v) / MAX_SPEED));
+  const target = input.left ? lock : input.right ? -lock : 0;
+  steer += (target - steer) * Math.min(1, dt * 6);
   vehicle.setSteeringValue(steer, 0);
   vehicle.setSteeringValue(steer, 1);
 
-  const brake = input.brake ? 12 : (!input.forward && !input.back ? 1.2 : 0);
   for (let i = 0; i < 4; i++) vehicle.setBrake(brake, i);
 }
+
+// Keep the car planted: a soft spring that pulls it upright, damping on roll
+// and pitch, and a little downforce that grows with speed. Yaw is left alone
+// so steering still feels free, and it's weak enough that ramps still jump.
+const WORLD_UP = new CANNON.Vec3(0, 1, 0);
+const _up = new CANNON.Vec3(), _axis = new CANNON.Vec3(), _w = new CANNON.Vec3();
+world.addEventListener('preStep', () => {
+  chassisBody.quaternion.vmult(WORLD_UP, _up);
+  if (_up.y < 0.2) return; // upside down: let the auto-flip handle it
+
+  _up.cross(WORLD_UP, _axis);                       // tilt direction, length = sin(tilt)
+  _w.copy(chassisBody.angularVelocity);
+  _w.y = 0;                                         // only roll + pitch
+  chassisBody.torque.x += _axis.x * 900 - _w.x * 60;
+  chassisBody.torque.z += _axis.z * 900 - _w.z * 60;
+
+  const speed = chassisBody.velocity.length();
+  chassisBody.force.y -= speed * speed * 1.2;
+});
 
 // ---------------------------------------------------------------------------
 // World content
@@ -578,7 +622,7 @@ async function buildWorld() {
   let seed = 11;
   const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   const clear = (x, z) =>
-    (Math.abs(z) < 5 && x > -48 && x < 10) ||          // main road
+    (Math.abs(z) < 9 && x > -48 && x < 10) ||          // main road
     (x > -20 && x < 0 && z < -12 && z > -32) ||        // court
     (x > -40 && x < -18 && z > -8 && z < 30) ||        // ramp + stack + cones
     (x > -16 && x < 22 && z > -20 && z < 26);          // spawn, pads, signs
@@ -610,7 +654,7 @@ function frame() {
   const dt = Math.min(clock.getDelta(), 0.1);
 
   drive(dt);
-  world.step(1 / 60, dt, 3);
+  world.step(1 / 120, dt, 8);
 
   for (const { mesh, body } of synced) {
     mesh.position.copy(body.position);
