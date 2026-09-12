@@ -556,10 +556,10 @@ async function buildWorld() {
     body.position.set(court.x + (i % 3) * 1.6 - 1, r + 0.5, court.z + Math.floor(i / 3) * 1.8 - 0.9);
     sync(makeBall(r), body);
   }
-  placeSign(makeSign('Hoops 🏀', [
-    'Pickup runs and playoff nights.',
-    'Competitive, but always a good teammate.',
-    'Go on, push the balls around.'
+  placeSign(makeSign('Sports', [
+    'Basketball these days, and soccer too.',
+    'The best part is playing on a team.',
+    'Push the balls around. Soccer field coming.'
   ], { accent: '#e8742c' }), -5, -28);
 
   // ---- Ramp ----
@@ -593,9 +593,9 @@ async function buildWorld() {
 
   // ---- Life sign + family heart ----
   placeSign(makeSign('Life', [
-    'Cars · biking · basketball · tech · movies',
-    'Family first, always.',
-    'Happiest when I\'m helping someone out.'
+    'Cars · sports · biking · tech · movies',
+    'Family comes first.',
+    'I like helping people out.'
   ], { accent: COLORS.pink }), -12, 18);
 
   const heart = new THREE.Shape();
