@@ -33,12 +33,12 @@
   var phrases = [
     'a technical lead manager.',
     'a car guy.',
-    'a cyclist.',
-    'a hooper.',
-    'a tech nerd.',
-    'a movie buff.',
-    'a family man.',
-    'here to help.'
+    'a team-sports guy.',
+    'usually out on my bike.',
+    'into tech.',
+    'a movie fan.',
+    'family first.',
+    'happy to help.'
   ];
 
   if (rotator && !reduceMotion) {

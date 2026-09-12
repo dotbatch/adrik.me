@@ -17,15 +17,16 @@ const coarsePointer = matchMedia('(pointer: coarse)').matches;
 
 // What each hobby says when you click it
 const MESSAGES = {
-  car: '🚗  Cars: lifelong car guy, and the software inside them is my day job',
-  basketball: '🏀  Basketball: pickup runs, playoff nights, always a good teammate',
-  bike: '🚴  Biking: two wheels, no notifications, head cleared',
-  wheel: '🛞  Built for the long haul: 13+ years at General Motors',
-  heart: '❤️  Family: the center of everything',
-  code: '💻  Tech: always tinkering, lately with a lot of AI',
-  film: '🎬  Movies: blockbusters, thrillers and shameless rewatches',
-  plus: '🤝  Helping others: mentoring, assists, and the "quick question" that never is',
-  letter: '👋  That\'s me. Keep clicking, the letters like it'
+  car: '🚗  Cars: a lifelong interest, and now my day job',
+  basketball: '🏀  Sports: basketball these days. I love playing on a team',
+  soccer: '⚽  Soccer: I play that too',
+  bike: '🚴  Biking: I just like getting out on the bike',
+  wheel: '🛞  13+ years at General Motors',
+  heart: '❤️  Family comes first',
+  code: '💻  Tech: always trying something new, lately AI tools',
+  film: '🎬  Movies: big releases, good thrillers, lots of rewatches',
+  plus: '🤝  Helping others: mentoring and lending a hand',
+  letter: '👋  Hi, that\'s me'
 };
 
 // Bright, iridescent normal-shaded look (same material on everything)
@@ -69,6 +70,12 @@ function makeBasketball() {
   const b = mesh(seam); b.rotation.y = Math.PI / 2;
   const c = mesh(seam); c.rotation.x = Math.PI / 2;
   g.add(a, b, c);
+  return g;
+}
+
+function makeSoccerBall() {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.58, 1), new THREE.MeshNormalMaterial({ flatShading: true })));
   return g;
 }
 
@@ -226,6 +233,7 @@ async function init() {
   const layout = {
     car: [-5.6, 2.6, -1.2],
     basketball: [5.2, 2.5, 0.2],
+    soccer: [2.2, 3.8, -2],
     bike: [4.6, -2.7, -0.4],
     wheel: [-7.4, 0.6, -2.4],
     heart: [2.2, -3.3, 0.9],
@@ -236,6 +244,7 @@ async function init() {
   const hobbyGroups = {
     car: add(makeCar(), 'car', layout.car),
     basketball: add(makeBasketball(), 'basketball', layout.basketball),
+    soccer: add(makeSoccerBall(), 'soccer', layout.soccer),
     bike: add(makeBike(), 'bike', layout.bike, { scale: 1.2 }),
     wheel: add(makeWheel(), 'wheel', layout.wheel),
     heart: add(makeHeart(), 'heart', layout.heart),
