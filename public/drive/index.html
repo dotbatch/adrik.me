@@ -82,6 +82,46 @@
       .hud--keys { display: none; }
       .prompt { bottom: 180px; }
     }
+
+    /* Shoot hoops mode */
+    .shoot { position: fixed; inset: 0; z-index: 4; pointer-events: none; display: none; }
+    .is-shooting .shoot { display: block; }
+    .is-shooting .pad, .is-shooting .hud--keys, .is-shooting #reset { display: none; }
+    .shoot__board {
+      position: absolute; top: 64px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 22px; padding: 10px 20px; border-radius: 16px;
+      background: rgba(42, 31, 23, .88); color: var(--paper);
+      font: 500 11px/1.3 "JetBrains Mono", monospace; text-transform: uppercase; letter-spacing: .08em;
+    }
+    .shoot__board div { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .shoot__board b { font: 800 22px/1 "Inter", sans-serif; letter-spacing: -.02em; text-transform: none; }
+    .shoot__meter {
+      position: absolute; right: 28px; top: 50%; transform: translateY(-50%);
+      width: 22px; height: 46vh; max-height: 320px; border-radius: 999px; overflow: hidden;
+      background: rgba(42, 31, 23, .25); box-shadow: inset 0 0 0 2px rgba(255, 248, 239, .8);
+    }
+    .shoot__fill { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: var(--accent); }
+    .shoot__sweet { position: absolute; z-index: 1; left: 0; right: 0; bottom: 46.5%; height: 7%; background: rgba(255, 248, 239, .35); box-shadow: inset 0 0 0 2px #fff; }
+    .shoot__msg {
+      position: absolute; top: 19%; left: 50%; transform: translateX(-50%);
+      font: 800 clamp(28px, 6vw, 48px)/1 "Inter", sans-serif; letter-spacing: -.03em; color: var(--ink);
+      text-shadow: 0 2px 0 rgba(255, 248, 239, .8); opacity: 0; white-space: nowrap;
+    }
+    .shoot__msg.pop { animation: pop 1.6s ease forwards; }
+    @keyframes pop { 0% { opacity: 0; transform: translate(-50%, 10px) scale(.9); } 12% { opacity: 1; transform: translate(-50%, 0) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
+    .shoot__help { position: absolute; bottom: 16px; left: 16px; font: 500 12px/1.4 "JetBrains Mono", monospace; color: rgba(42, 31, 23, .75); }
+    .shoot__help kbd { display: inline-block; min-width: 22px; padding: 2px 6px; margin: 0 1px; text-align: center; border-radius: 6px; background: var(--paper); box-shadow: 0 2px 0 rgba(60, 30, 0, .25); font: inherit; }
+    .shoot__exit { position: absolute; top: 16px; right: 16px; pointer-events: auto; }
+    .shoot__touch { position: absolute; bottom: max(16px, env(safe-area-inset-bottom)); left: 16px; right: 16px; display: none; justify-content: space-between; align-items: flex-end; pointer-events: none; }
+    .shoot__touch button { pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; border: 0; background: rgba(255, 248, 239, .85); color: var(--ink); box-shadow: 0 6px 20px -10px rgba(60, 30, 0, .5); }
+    .shoot__touch .aim { display: flex; gap: 10px; }
+    .shoot__touch .aim button { width: 60px; height: 60px; border-radius: 50%; font-size: 22px; }
+    .shoot__touch #shoot-btn { width: 110px; height: 110px; border-radius: 50%; background: var(--accent); color: #fff; font: 800 15px/1.1 "Inter", sans-serif; }
+    @media (pointer: coarse) {
+      .shoot__touch { display: flex; }
+      .shoot__help { display: none; }
+      .shoot__meter { right: 16px; top: 42%; }
+    }
   </style>
 </head>
 <body>
@@ -107,11 +147,29 @@
     <button type="button" data-key="forward">▲</button>
   </div>
 
+
+  <div class="shoot" id="shoot">
+    <div class="shoot__board" aria-live="polite">
+      <div>made<b id="shoot-makes">0/0</b></div>
+      <div>pct<b id="shoot-pct">–</b></div>
+      <div>streak<b id="shoot-streak">0</b></div>
+      <div>best<b id="shoot-best">0</b></div>
+    </div>
+    <div class="shoot__meter" aria-hidden="true"><div class="shoot__sweet"></div><div class="shoot__fill" id="shoot-fill"></div></div>
+    <div class="shoot__msg" id="shoot-msg" role="status"></div>
+    <button class="chip shoot__exit" type="button" id="shoot-exit">back to driving ✕</button>
+    <div class="shoot__help" aria-hidden="true"><kbd>A</kbd><kbd>D</kbd> aim · hold <kbd>space</kbd> and let go in the white band · <kbd>esc</kbd> back</div>
+    <div class="shoot__touch">
+      <div class="aim"><button type="button" data-key="left" aria-label="Aim left">◀</button><button type="button" data-key="right" aria-label="Aim right">▶</button></div>
+      <button type="button" id="shoot-btn">hold<br>to shoot</button>
+    </div>
+  </div>
+
   <div class="intro" id="intro">
     <div class="intro__card">
       <span class="tag">experimental</span>
       <h1>adrik.me / drive</h1>
-      <p>Take a little car for a spin around my world. Knock over my name, push some basketballs around, and find out what I'm up to on the signs.</p>
+      <p>Take a little car for a spin around my world. Knock over my name, shoot some hoops, and find out what I'm up to on the signs.</p>
       <button type="button" id="start" disabled>Loading…</button>
       <small>Works best on a laptop or desktop with a keyboard.</small>
     </div>
