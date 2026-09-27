@@ -3,18 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Adrik Grigorian — Technical Lead Manager</title>
-  <meta name="description" content="Adrik Grigorian — Technical Lead Manager at General Motors. Engineering leader based in Austin, Texas. Into cars, sports, biking and tech.">
+  <title>Adrik Grigorian | Technical Lead Manager &amp; Engineering Leader in Austin, TX</title>
+  <meta name="description" content="Adrik Grigorian, Technical Lead Manager at General Motors in Austin, TX. 13+ years leading engineering teams in product cybersecurity and distributed systems.">
+  <meta name="author" content="Adrik Grigorian">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="geo.region" content="US-TX">
+  <meta name="geo.placename" content="Austin">
   <meta name="theme-color" content="#0b0c0f">
   <link rel="canonical" href="https://adrik.me/">
 
   <!-- Social cards -->
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Adrik Grigorian">
-  <meta property="og:description" content="Technical Lead Manager at General Motors. I measure success by the number of people I positively impact.">
+  <meta property="og:type" content="profile">
+  <meta property="og:site_name" content="adrik.me">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="Adrik Grigorian | Technical Lead Manager in Austin, TX">
+  <meta property="og:description" content="Engineering leader at General Motors in Austin, Texas. 13+ years in product cybersecurity, distributed systems and building strong teams.">
   <meta property="og:url" content="https://adrik.me/">
-  <meta property="og:image" content="https://adrik.me/assets/img/hero.jpg">
+  <meta property="og:image" content="https://adrik.me/assets/img/og-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Adrik Grigorian, Technical Lead Manager at General Motors, Austin, Texas">
+  <meta property="profile:first_name" content="Adrik">
+  <meta property="profile:last_name" content="Grigorian">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Adrik Grigorian | Technical Lead Manager in Austin, TX">
+  <meta name="twitter:description" content="Engineering leader at General Motors in Austin, Texas. Product cybersecurity, distributed systems and team leadership.">
+  <meta name="twitter:image" content="https://adrik.me/assets/img/og-card.png">
 
   <script>
     document.documentElement.classList.add('js');
@@ -26,24 +40,58 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css">
 
+  <!-- Structured data: tells search engines who this page is about -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "Person",
-    "name": "Adrik Grigorian",
+    "@type": "ProfilePage",
     "url": "https://adrik.me/",
-    "jobTitle": "Technical Lead Manager",
-    "worksFor": { "@type": "Organization", "name": "General Motors" },
-    "address": { "@type": "PostalAddress", "addressLocality": "Austin", "addressRegion": "TX" },
-    "alumniOf": "University of Houston",
-    "sameAs": ["https://www.linkedin.com/in/adrik-grigorian/"]
+    "name": "Adrik Grigorian | Technical Lead Manager in Austin, TX",
+    "inLanguage": "en-US",
+    "mainEntity": {
+      "@type": "Person",
+      "@id": "https://adrik.me/#adrik",
+      "name": "Adrik Grigorian",
+      "givenName": "Adrik",
+      "familyName": "Grigorian",
+      "url": "https://adrik.me/",
+      "image": "https://adrik.me/assets/img/og-card.png",
+      "description": "Technical Lead Manager at General Motors in Austin, Texas, leading software engineering teams in product cybersecurity and distributed systems.",
+      "jobTitle": "Technical Lead Manager",
+      "worksFor": { "@type": "Organization", "name": "General Motors", "url": "https://www.gm.com/" },
+      "workLocation": {
+        "@type": "Place",
+        "address": { "@type": "PostalAddress", "addressLocality": "Austin", "addressRegion": "TX", "addressCountry": "US" }
+      },
+      "homeLocation": {
+        "@type": "Place",
+        "address": { "@type": "PostalAddress", "addressLocality": "Austin", "addressRegion": "TX", "addressCountry": "US" }
+      },
+      "hasOccupation": {
+        "@type": "Occupation",
+        "name": "Technical Lead Manager",
+        "occupationLocation": { "@type": "City", "name": "Austin, Texas" },
+        "skills": "Engineering management, technical leadership, product cybersecurity, distributed systems, API design, Java, Spring Boot, Kafka, Kubernetes, Azure"
+      },
+      "knowsAbout": [
+        "Engineering management", "Technical leadership", "Product cybersecurity", "Distributed systems",
+        "Microservices", "API design", "Public key infrastructure", "Cryptographic signing", "Java", "Spring Boot",
+        "Kafka", "Redis", "PostgreSQL", "Kubernetes", "Azure", "OpenTelemetry", "TypeScript", "Python"
+      ],
+      "alumniOf": {
+        "@type": "CollegeOrUniversity",
+        "name": "University of Houston, C.T. Bauer College of Business",
+        "url": "https://www.bauer.uh.edu/"
+      },
+      "sameAs": ["https://www.linkedin.com/in/adrik-grigorian/", "https://github.com/dotbatch"]
+    }
   }
   </script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
-  <header class="nav" id="top">
+  <header class="nav">
     <div class="wrap nav__inner">
       <a class="brand" href="#top" aria-label="Adrik Grigorian, home">
         <span class="brand__mark">ag<span class="brand__cursor">_</span></span>
@@ -65,7 +113,7 @@
 
   <main id="main">
     <!-- Hero -->
-    <section class="hero">
+    <section class="hero" id="top">
       <div class="hero__bg" aria-hidden="true"></div>
       <canvas class="hero__canvas" id="hero-canvas" aria-hidden="true"></canvas>
       <p class="hero__hint" aria-hidden="true"><span class="hero__hint-drag">drag to spin · </span>tap the things</p>
@@ -140,8 +188,9 @@
           <p class="eyebrow reveal">About</p>
           <h2 class="reveal">Building secure systems and strong teams.</h2>
           <p class="reveal">
-            I've spent more than a decade at General Motors, growing from software developer to staff engineer
-            in Product Cybersecurity and now to <strong>Technical Lead Manager</strong>. My work sits where
+            I'm a <strong>Technical Lead Manager</strong> at General Motors in <strong>Austin, Texas</strong>.
+            Over 13+ years at GM I've grown from software developer to staff engineer in Product Cybersecurity,
+            and now I lead the engineering teams behind it. My work sits where
             large-scale distributed systems meet security: vehicle unlock and verification, cryptographic
             signing, and the APIs that tie it all together.
           </p>
@@ -301,7 +350,8 @@
       <div class="wrap contact__inner reveal">
         <p class="eyebrow">Contact</p>
         <h2>Let's talk.</h2>
-        <p>Engineering, leadership, cars or sports: I'm always happy to connect.</p>
+        <p>Engineering, leadership, cars or sports: I'm always happy to connect. Recruiters and hiring
+          managers, LinkedIn is the best way to reach me.</p>
         <div class="hero__cta">
           <a class="btn btn--primary" href="https://www.linkedin.com/in/adrik-grigorian/" target="_blank" rel="noopener">Message me on LinkedIn</a>
         </div>
@@ -311,7 +361,7 @@
 
   <footer class="footer">
     <div class="wrap footer__inner">
-      <span>© <span id="year">2026</span> Adrik Grigorian</span>
+      <span>© <span id="year">2026</span> Adrik Grigorian · Austin, Texas</span>
       <span class="footer__meta">hand-coded html/css/js · zero frameworks · shipped by github actions · psst: ↑↑↓↓←→←→BA</span>
       <a href="drive/">🚗 drive mode (experimental) →</a>
       <a href="#top">cd ~ ↑</a>
