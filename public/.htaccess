@@ -21,12 +21,23 @@ ErrorDocument 404 /index.html
   AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml
 </IfModule>
 
+# Validators for revalidation: same file on disk = same ETag
+FileETag MTime Size
+
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresDefault "access plus 1 hour"
-  ExpiresByType text/html "access plus 0 seconds"
-  ExpiresByType text/css "access plus 1 week"
-  ExpiresByType application/javascript "access plus 1 week"
   ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
   ExpiresByType image/svg+xml "access plus 1 month"
+</IfModule>
+
+# HTML, CSS and JS: browsers keep a copy but check with the server on every
+# load. Unchanged files get a tiny 304 and the cached copy is used; changed
+# files download right away, so deploys show up without a hard refresh.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|css|js|mjs)$">
+    Header set Cache-Control "no-cache"
+    Header unset Expires
+  </FilesMatch>
 </IfModule>
