@@ -6,6 +6,7 @@ import * as CANNON from 'cannon-es';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { createSoccer } from './soccer.js';
 
 const FONT_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json';
 const LINKEDIN = 'https://www.linkedin.com/in/adrik-grigorian/';
@@ -254,6 +255,15 @@ function resetCar(atSpawn = true) {
   chassisBody.angularVelocity.setZero();
 }
 
+function placeCar(x, z, yaw = 0) {
+  chassisBody.position.set(x, 1.2, z);
+  chassisBody.quaternion.setFromEuler(0, yaw, 0);
+  chassisBody.velocity.setZero();
+  chassisBody.angularVelocity.setZero();
+  throttle = 0;
+  steer = 0;
+}
+
 // ---------------------------------------------------------------------------
 // Input
 // ---------------------------------------------------------------------------
@@ -445,7 +455,7 @@ function floorText(text, x, z, size = 1, color = COLORS.path) {
 // ---- Interactive pads: drive onto them, press Enter ----
 const pads = [];
 let activePad = null;
-function makePad(label, x, z, color, action, promptText = `Open ${label} ↵`) {
+function makePad(label, x, z, color, action, promptText = `Open ${label} ↵`, enabled = null) {
   const ring = new THREE.Mesh(new THREE.RingGeometry(1.7, 2.1, 48), new THREE.MeshBasicMaterial({ color }));
   ring.rotation.x = -Math.PI / 2;
   ring.position.set(x, 0.03, z);
@@ -454,12 +464,13 @@ function makePad(label, x, z, color, action, promptText = `Open ${label} ↵`) {
   disc.position.set(x, 0.025, z);
   scene.add(ring, disc);
   floorText(label, x + Math.sin(FACE) * 3.2, z + Math.cos(FACE) * 3.2, 0.5, color);
-  pads.push({ label, promptText, pos: new THREE.Vector2(x, z), ring, action });
+  pads.push({ label, promptText, pos: new THREE.Vector2(x, z), ring, action, enabled });
 }
 
 // ---------------------------------------------------------------------------
 // Build the world (needs the font)
 // ---------------------------------------------------------------------------
+let soccer = null;
 async function buildWorld() {
   const font = await new FontLoader().loadAsync(FONT_URL);
 
@@ -569,10 +580,17 @@ async function buildWorld() {
     body.position.set(court.x - 3 + (i % 3) * 1.1, r + 0.5, court.z + 3.4 + Math.floor(i / 3) * 1.0);
     sync(makeBall(r), body);
   }
+  // ---- Soccer pitch + penalty challenge (soccer.js) ----
+  pathStrip(-14, -34, 5, 6);
+  soccer = createSoccer({
+    THREE, CANNON, scene, world, mat, box, shadowed, canvasTexture, staticBody, sync,
+    floorText, makePad, makeSign, placeSign, chassisBody, groundMat, placeCar, COLORS
+  });
+
   placeSign(makeSign('Sports', [
     'Basketball these days, and soccer too.',
     'The best part is playing on a team.',
-    'Park on the orange pad to shoot hoops.'
+    'Shoot hoops here, penalties next door.'
   ], { accent: '#e8742c' }), -5, -28);
 
   // ---- Ramp ----
@@ -638,7 +656,9 @@ async function buildWorld() {
     (Math.abs(z) < 9 && x > -48 && x < 10) ||          // main road
     (x > -20 && x < 0 && z < -12 && z > -32) ||        // court
     (x > -40 && x < -18 && z > -8 && z < 30) ||        // ramp + stack + cones
-    (x > -16 && x < 22 && z > -20 && z < 26);          // spawn, pads, signs
+    (x > -16 && x < 22 && z > -20 && z < 26) ||        // spawn, pads, signs
+    (x > -18 && x < -10 && z > -40 && z < -28) ||      // road to the pitch
+    soccer.clear(x, z);                                // soccer pitch
   for (let i = 0; i < 60; i++) {
     const x = (rand() - 0.5) * 120, z = (rand() - 0.5) * 100;
     if (clear(x, z)) continue;
@@ -733,6 +753,7 @@ function idealSpeed() {
 
 function enterShoot() {
   if (!shoot.rim || mode === 'shoot') return;
+  if (soccer && soccer.active) soccer.stop();
   mode = 'shoot';
   document.body.classList.add('is-shooting');
   prompt.classList.remove('is-visible');
@@ -922,6 +943,7 @@ function frame() {
   }
   carMesh.position.copy(chassisBody.position);
   carMesh.quaternion.copy(chassisBody.quaternion);
+  const focus = soccer && mode === 'drive' ? soccer.update(dt, clock.elapsedTime, carMesh.position) : null;
 
   // Fell off the world, or stuck on its roof for a couple of seconds
   if (chassisBody.position.y < -10) resetCar();
@@ -935,7 +957,7 @@ function frame() {
     camTarget.lerp(shoot.look, ease);
     camPos.lerp(shoot.camPos, ease);
   } else {
-    camTarget.lerp(carMesh.position, ease);
+    camTarget.lerp(focus || carMesh.position, ease);
     camPos.lerp(_desiredCam.copy(camTarget).add(CAM_OFFSET), Math.min(1, ease * 2.5));
   }
   camera.position.copy(camPos);
@@ -948,7 +970,7 @@ function frame() {
   const t = clock.elapsedTime;
   let near = null;
   for (const p of pads) {
-    const inside = mode === 'drive' && p.pos.distanceTo(car2) < 2.2;
+    const inside = mode === 'drive' && (!p.enabled || p.enabled()) && p.pos.distanceTo(car2) < 2.2;
     p.ring.scale.setScalar(inside ? 1.08 : 1 + Math.sin(t * 3) * 0.03);
     if (inside) near = p;
   }
