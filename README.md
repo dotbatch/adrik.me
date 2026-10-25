@@ -1,5 +1,7 @@
 # adrik.me
 
+[![Deploy to cPanel](https://github.com/dotbatch/adrik.me/actions/workflows/deploy.yml/badge.svg)](https://github.com/dotbatch/adrik.me/actions/workflows/deploy.yml)
+
 Personal site for Adrik Grigorian — Technical Lead Manager at General Motors.
 
 Plain HTML, CSS and JavaScript. No build step, no frameworks: everything that ships lives in `public/`.
