@@ -13,7 +13,8 @@ Status key: ✅ shipped · 🚧 in progress · 🔜 next · 💡 idea
 - Knock-over 3D "ADRIK" letters
 - Signs: welcome, work, sports, life
 - Tech-stack crate pyramid
-- Basketball court with hoop and bouncy balls
+- Basketball court with hoop and bouncy balls, plus a "Shoot hoops" mini game
+- Soccer pitch with a 5-shot penalty challenge (`soccer.js`)
 - Ramp with a jump, traffic-cone slalom
 - Family heart
 - Link pads for LinkedIn and back to adrik.me
@@ -22,7 +23,7 @@ Status key: ✅ shipped · 🚧 in progress · 🔜 next · 💡 idea
 
 ---
 
-## Phase 1: Soccer area 🔜
+## Phase 1: Soccer area ✅ (free kicks still 🔜)
 
 A small pitch next to the basketball court with a penalty / free-kick mini game.
 The basketball court stays as it is.
@@ -47,7 +48,16 @@ The basketball court stays as it is.
 - **End:** after 5 shots, show the score ("3 / 5") and the best score this visit,
   with buttons to play again or keep driving.
 
-### Free-kick variant (stretch goal)
+### Shipped
+- Pitch with mown stripes and markings, goal with posts, bar and a net that catches the ball
+- Keeper that shuffles across the line, then reacts after a short delay and dives to
+  where it *guesses* the ball is going (slightly off on purpose), a little faster after each goal
+- Kick assist: driving into the ball strikes it away from the car with real pace
+- Results: GOAL! (confetti + net shake), Saved!, Wide, Over the bar, Not enough
+- Scoreboard (shots, goals, best). Best score is kept in the browser.
+- Round ends quietly if you drive more than 40 m away
+
+### Free-kick variant (next)
 - The ball spawns at a random spot outside the box with a 3-4 block wall in front
 - Same scoring rules; one shot per round
 
