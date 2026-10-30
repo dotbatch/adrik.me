@@ -26,6 +26,14 @@ When choosing the next task, prioritize in this order:
 
 **Fail fast on risky work. Save easy wins for later.**
 
+## Planning and Tickets
+
+- **"Make a story" (or task / ticket) means create a Jira item, not write code.** Work is tracked in the Jira
+  project **BO** ("Adrik.me"): https://pixsol.atlassian.net/jira/core/projects/BO/board
+- BO has no Story issue type: create a **Task** under the matching Workstream (BO-1 Ring of fire jump,
+  BO-2 Drive mode: Polish, BO-3 Drive mode: More of the world, BO-4 Main site, BO-5 Housekeeping)
+- Give it a why, a what and acceptance criteria. Only start implementing when asked to
+
 ## Content Rules
 
 These come first. Breaking one is a bug even if the page looks fine.
