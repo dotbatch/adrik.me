@@ -156,9 +156,44 @@ pathStrip(-20, 0, 48, 5);     // main road heading "up"
 pathStrip(-14, -16, 5, 30);   // side road to the court
 pathStrip(-30, 14, 5, 26);    // side road to the ramp
 
-// Invisible walls at the edge of the world
+// Walls at the edge of the world. The grid is drawn in the shader on world
+// coordinates and only shows within a few metres of the car, so the edge
+// appears as you reach it and stays out of the way the rest of the time.
+const EDGE_H = 2.5;
+const edgeMat = new THREE.ShaderMaterial({
+  uniforms: { uCar: { value: new THREE.Vector3() }, uColor: { value: new THREE.Color(COLORS.accent) } },
+  vertexShader: `
+    varying vec3 vWorld;
+    void main() {
+      vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
+      gl_Position = projectionMatrix * viewMatrix * vec4(vWorld, 1.0);
+    }`,
+  fragmentShader: `
+    uniform vec3 uCar;
+    uniform vec3 uColor;
+    varying vec3 vWorld;
+    void main() {
+      // walls are axis-aligned, so x + z runs along whichever wall this is
+      vec2 c = vec2(vWorld.x + vWorld.z, vWorld.y) * 2.0;   // half-metre cells
+      vec2 g = abs(fract(c - 0.5) - 0.5) / fwidth(c);
+      float line = 1.0 - min(min(g.x, g.y), 1.0);
+      float near = 1.0 - smoothstep(3.0, 10.0, distance(vWorld.xz, uCar.xz));
+      float top = 1.0 - smoothstep(${(EDGE_H - 0.8).toFixed(1)}, ${EDGE_H.toFixed(1)}, vWorld.y);
+      float a = near * top * (0.06 + 0.55 * line);
+      if (a < 0.005) discard;
+      gl_FragColor = vec4(uColor, a);
+    }`,
+  transparent: true,
+  depthWrite: false,
+  side: THREE.DoubleSide
+});
 for (const [x, z, w, d] of [[0, -60, 140, 1], [0, 60, 140, 1], [-70, 0, 1, 120], [70, 0, 1, 120]]) {
   staticBody(new CANNON.Box(new CANNON.Vec3(w / 2, 3, d / 2)), [x, 3, z]);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(Math.max(w, d), EDGE_H), edgeMat);
+  if (d > w) face.rotation.y = Math.PI / 2;
+  // sit on the inner face so the car touches the grid, not a gap in front of it
+  face.position.set(x - Math.sign(x) * w / 2, EDGE_H / 2, z - Math.sign(z) * d / 2);
+  scene.add(face);
 }
 
 // ---------------------------------------------------------------------------
@@ -982,6 +1017,7 @@ function frame() {
   camera.lookAt(camTarget);
   sun.position.copy(camTarget).add(SUN_OFFSET);
   sun.target.position.copy(camTarget);
+  edgeMat.uniforms.uCar.value.copy(carMesh.position);
 
   // Pads (not while shooting)
   const car2 = new THREE.Vector2(carMesh.position.x, carMesh.position.z);
