@@ -159,7 +159,7 @@ pathStrip(-30, 14, 5, 26);    // side road to the ramp
 // Walls at the edge of the world. The grid is drawn in the shader on world
 // coordinates and only shows within a few metres of the car, so the edge
 // appears as you reach it and stays out of the way the rest of the time.
-const EDGE_H = 2.5;
+const EDGE_H = 5;
 const edgeMat = new THREE.ShaderMaterial({
   uniforms: { uCar: { value: new THREE.Vector3() }, uColor: { value: new THREE.Color(COLORS.accent) } },
   vertexShader: `
@@ -178,7 +178,7 @@ const edgeMat = new THREE.ShaderMaterial({
       vec2 g = abs(fract(c - 0.5) - 0.5) / fwidth(c);
       float line = 1.0 - min(min(g.x, g.y), 1.0);
       float near = 1.0 - smoothstep(3.0, 10.0, distance(vWorld.xz, uCar.xz));
-      float top = 1.0 - smoothstep(${(EDGE_H - 0.8).toFixed(1)}, ${EDGE_H.toFixed(1)}, vWorld.y);
+      float top = 1.0 - smoothstep(${(EDGE_H - 2).toFixed(1)}, ${EDGE_H.toFixed(1)}, vWorld.y);
       float a = near * top * (0.06 + 0.55 * line);
       if (a < 0.005) discard;
       gl_FragColor = vec4(uColor, a);
