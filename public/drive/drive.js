@@ -464,7 +464,25 @@ function makePad(label, x, z, color, action, promptText = `Open ${label} ↵`, e
   disc.position.set(x, 0.025, z);
   scene.add(ring, disc);
   floorText(label, x + Math.sin(FACE) * 3.2, z + Math.cos(FACE) * 3.2, 0.5, color);
-  pads.push({ label, promptText, pos: new THREE.Vector2(x, z), ring, action, enabled });
+  const pad = { label, promptText, pos: new THREE.Vector2(x, z), ring, action, enabled };
+  pads.push(pad);
+  return pad;
+}
+
+// Arrow hovering over a pad so people know they can play there. A four-sided
+// head keeps the spin visible (a round cone would look still).
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ARROW_Y = 1.6; // low enough that, from the tilted camera, it still reads as over the pad
+function addArrow(pad, color) {
+  const arrow = new THREE.Group();
+  const head = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.7, 4), mat(color, { flatShading: true }));
+  head.rotation.x = Math.PI;                         // point at the ground
+  const shaft = box(0.22, 0.6, 0.22, color, 0.04);
+  shaft.position.y = 0.6;
+  arrow.add(head, shaft);
+  arrow.position.set(pad.pos.x, ARROW_Y, pad.pos.y);
+  scene.add(shadowed(arrow));
+  pad.arrow = arrow;
 }
 
 // ---------------------------------------------------------------------------
@@ -570,7 +588,7 @@ async function buildWorld() {
     new THREE.Vector3(court.x - 6.5 + 1.4, 3.2, court.z),   // rim centre
     new THREE.Vector3(court.x - 6.5 + 0.9, 3.6, court.z)    // backboard centre
   );
-  makePad('Shoot hoops', court.x + 5, court.z + 2.5, '#e8742c', enterShoot, 'Shoot hoops ↵');
+  addArrow(makePad('Shoot hoops', court.x + 5, court.z + 2.5, '#e8742c', enterShoot, 'Shoot hoops ↵'), '#e8742c');
 
   for (let i = 0; i < 6; i++) {
     const r = 0.45;
@@ -584,7 +602,7 @@ async function buildWorld() {
   pathStrip(-14, -34, 5, 6);
   soccer = createSoccer({
     THREE, CANNON, scene, world, mat, box, shadowed, canvasTexture, staticBody, sync,
-    floorText, makePad, makeSign, placeSign, chassisBody, groundMat, placeCar, COLORS
+    floorText, makePad, addArrow, makeSign, placeSign, chassisBody, groundMat, placeCar, COLORS
   });
 
   placeSign(makeSign('Sports', [
@@ -970,8 +988,16 @@ function frame() {
   const t = clock.elapsedTime;
   let near = null;
   for (const p of pads) {
-    const inside = mode === 'drive' && (!p.enabled || p.enabled()) && p.pos.distanceTo(car2) < 2.2;
+    const open = mode === 'drive' && (!p.enabled || p.enabled());
+    const inside = open && p.pos.distanceTo(car2) < 2.2;
     p.ring.scale.setScalar(inside ? 1.08 : 1 + Math.sin(t * 3) * 0.03);
+    if (p.arrow) {
+      p.arrow.visible = open && !inside;
+      if (!reduceMotion) {
+        p.arrow.rotation.y = t * 1.2;
+        p.arrow.position.y = ARROW_Y + Math.sin(t * 2) * 0.15;   // gentle bob
+      }
+    }
     if (inside) near = p;
   }
   if (near !== activePad) {

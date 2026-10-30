@@ -15,7 +15,7 @@ const BEST_KEY = 'drive.penalties.best';
 
 export function createSoccer(ctx) {
   const { THREE, CANNON, scene, world, mat, box, shadowed, canvasTexture, staticBody, sync,
-    floorText, makePad, makeSign, placeSign, chassisBody, groundMat, placeCar, COLORS } = ctx;
+    floorText, makePad, addArrow, makeSign, placeSign, chassisBody, groundMat, placeCar, COLORS } = ctx;
 
   const ui = {
     root: document.getElementById('penalty'),
@@ -233,7 +233,7 @@ export function createSoccer(ctx) {
   const game = { active: false, state: 'idle', shots: 0, goals: 0, timer: 0, best: 0 };
   try { game.best = +localStorage.getItem(BEST_KEY) || 0; } catch (e) { /* storage blocked */ }
 
-  makePad('Penalties', START.x, START.z, '#3f9b4f', start, 'Take penalties ↵', () => !game.active);
+  addArrow(makePad('Penalties', START.x, START.z, '#3f9b4f', start, 'Take penalties ↵', () => !game.active), '#3f9b4f');
   floorText('⚽', SPOT_X + 2.2, PITCH.z, 0.35, '#ffffff');
 
   // ---------------------------------------------------------------------------
