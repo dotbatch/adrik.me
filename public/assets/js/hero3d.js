@@ -334,12 +334,12 @@ async function init() {
     toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 3200);
   }
 
+  // Touch users have no keyboard for the Konami code, so tapping the letters throws the party itself
+  const PARTY_MSG = coarsePointer ? '🎉  OK OK, you found the party.' : '🎉  OK OK, you found the party. ↑↑↓↓←→←→BA';
   let clickCount = 0;
   function poke(item, now) {
     item.userData.hopAt = now;
     item.userData.boost = 9;
-    const msg = MESSAGES[item.userData.kind];
-    if (msg) showToast(item.userData.kind === 'letter' && ++clickCount > 4 ? '🎉  OK OK, you found the party. ↑↑↓↓←→←→BA' : msg);
   }
 
   let down = null;
@@ -347,7 +347,12 @@ async function init() {
   canvas.addEventListener('pointerup', (e) => {
     if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) return;
     const item = pick(e);
-    if (item) poke(item, clock.elapsedTime);
+    if (!item) return;
+    poke(item, clock.elapsedTime);
+    const msg = MESSAGES[item.userData.kind];
+    const isLetter = item.userData.kind === 'letter';
+    if (msg) showToast(isLetter && ++clickCount > 4 ? PARTY_MSG : msg);
+    if (coarsePointer && isLetter && clickCount === 5) window.adrikParty();
   });
   if (!coarsePointer) {
     canvas.addEventListener('pointermove', (e) => {
