@@ -372,6 +372,8 @@ main { counter-reset: section; }
 .footer { border-top: 1px solid var(--line); padding: 28px 0; font-size: .88rem; color: var(--muted); }
 .footer__inner { display: flex; justify-content: space-between; align-items: center; gap: 12px 24px; flex-wrap: wrap; font-family: var(--font-mono); font-size: .78rem; }
 .footer__meta { opacity: .75; }
+/* No keyboard on touch; tapping the hero letters is their way in */
+@media (pointer: coarse) { .footer__konami { display: none; } }
 .footer a { text-decoration: none; }
 .footer a:hover { color: var(--text); }
 
