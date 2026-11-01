@@ -1,6 +1,6 @@
 # Drive mode roadmap
 
-Plans for the experimental drivable site at [adrik.me/drive](https://adrik.me/drive/)
+Plans for the drivable site at [adrik.me/drive](https://adrik.me/drive/)
 (`public/drive/`). The main site is separate and isn't affected by anything here.
 
 Status key: ✅ shipped · 🚧 in progress · 🔜 next · 💡 idea
@@ -19,7 +19,7 @@ Status key: ✅ shipped · 🚧 in progress · 🔜 next · 💡 idea
 - Family heart
 - Link pads for LinkedIn and back to adrik.me
 - Keyboard and touch controls, auto-flip, reset
-- Linked from the main site's footer; `noindex` while experimental
+- Out of experimental: indexed, in the sitemap, linked from a small "Drive" button in the main nav and the footer
 
 ---
 
@@ -144,4 +144,3 @@ Small things that make it feel like Bruno Simon's site.
 - Split `drive.js` into modules (`car.js`, `world.js`, `soccer.js`, `fire-ring.js`) as it grows
 - Pin versions and consider self-hosting three.js and cannon-es instead of relying on the CDN
 - Basic performance budget: under 2 s to first frame on broadband, 60 fps on desktop
-- When it feels finished: remove `noindex`, and add a link from the main hero, not just the footer
