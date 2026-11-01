@@ -132,6 +132,16 @@ main { counter-reset: section; }
 }
 .nav__links a:hover, .nav__links a.is-active { color: var(--text); background: var(--surface); }
 
+/* A side door to drive mode: findable, but quieter than the section links */
+.drive-link {
+  display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px 0 12px;
+  border: 1px solid var(--line); border-radius: 999px;
+  color: var(--muted); text-decoration: none; font: 500 .85rem/1 var(--font-mono);
+  transition: color .2s, border-color .2s;
+}
+.drive-link:hover { color: var(--text); border-color: var(--accent); }
+.drive-link svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
 .theme-toggle {
   display: grid; place-items: center;
   width: 40px; height: 40px; border-radius: 999px;
@@ -149,11 +159,13 @@ main { counter-reset: section; }
 @media (max-width: 640px) {
   .nav__links a { padding: 8px 9px; font-size: .85rem; }
   .nav__inner { gap: 8px; }
+  .drive-link { width: 40px; padding: 0; justify-content: center; }
+  .drive-link span { display: none; }
 }
 @media (max-width: 400px) {
   .brand { display: none; }
   .nav__inner > nav { margin-left: 0; }
-  .theme-toggle { margin-left: auto; }
+  .drive-link { margin-left: auto; }
 }
 
 /* ==========================================================================
