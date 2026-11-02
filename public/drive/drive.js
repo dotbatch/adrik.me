@@ -154,7 +154,8 @@ function pathStrip(x, z, w, d, rotY = 0) {
 }
 pathStrip(-20, 0, 48, 5);     // main road heading "up"
 pathStrip(-14, -16, 5, 30);   // side road to the court
-pathStrip(-30, 14, 5, 26);    // side road to the ramp
+pathStrip(2, 15, 5, 26);      // side road from the spawn to the jump
+pathStrip(-24, 30, 52, 5);    // the jump run
 
 // Walls at the edge of the world. The grid is drawn in the shader on world
 // coordinates and only shows within a few metres of the car, so the edge
@@ -340,6 +341,23 @@ const MAX_REVERSE = 6;      // m/s backward
 let steer = 0;
 let throttle = 0;
 
+// The jump runs toward -x along z = JUMP.z. The take-off lip is at x = -24 and the
+// landing ramp's top at x = -32: the gap between is where the ring of fire will go.
+// The landing ramp is long and gentle so both normal and boosted jumps land on it.
+const JUMP = { z: 30, w: 5, run: 10, rise: 3, landRun: 14, landRise: 2.6, takeoffX: -19, landX: -39, boostX: -9, boostLen: 6 };
+// The car reaches ~14 m/s at the lip from almost any run-up; the boost gets it
+// to ~16.5, which carries it noticeably further down the landing ramp.
+const BOOST_SPEED = 22;
+let boostMat = null;
+
+// On the pad, top the car up to BOOST_SPEED along the run (only when already heading that way)
+function boost(dt) {
+  const p = chassisBody.position;
+  if (Math.abs(p.x - JUMP.boostX) > JUMP.boostLen / 2 || Math.abs(p.z - JUMP.z) > JUMP.w / 2 || p.y > 1.5) return;
+  const v = -chassisBody.velocity.x;
+  if (v > 2 && v < BOOST_SPEED) chassisBody.velocity.x -= (BOOST_SPEED - v) * Math.min(1, dt * 6);
+}
+
 const _fwd = new CANNON.Vec3();
 function forwardSpeed() {
   chassisBody.quaternion.vmult(new CANNON.Vec3(-1, 0, 0), _fwd);
@@ -455,6 +473,24 @@ function makeTree(scale) {
   g.add(trunk, leaf, leaf2);
   g.scale.setScalar(scale);
   return shadowed(g);
+}
+
+// A solid wedge sitting on the ground that rises toward -x, or toward +x when
+// flipped. Solid (not a tilted slab) so there's no gap to drive under.
+function addRamp(x, z, run, rise, w, color, flip = false) {
+  const shape = new THREE.Shape([new THREE.Vector2(run / 2, 0), new THREE.Vector2(-run / 2, 0), new THREE.Vector2(-run / 2, rise)]);
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: w, bevelEnabled: false });
+  geo.translate(0, 0, -w / 2);
+  const mesh = shadowed(new THREE.Mesh(geo, mat(color)));
+  const rotY = flip ? Math.PI : 0;
+  mesh.position.set(x, 0, z);
+  mesh.rotation.y = rotY;
+  scene.add(mesh);
+  const v = [[run / 2, 0, -w / 2], [-run / 2, 0, -w / 2], [-run / 2, rise, -w / 2], [run / 2, 0, w / 2], [-run / 2, 0, w / 2], [-run / 2, rise, w / 2]];
+  staticBody(new CANNON.ConvexPolyhedron({
+    vertices: v.map((p) => new CANNON.Vec3(...p)),
+    faces: [[0, 1, 2], [3, 5, 4], [0, 3, 4, 1], [1, 4, 5, 2], [0, 2, 5, 3]]
+  }), [x, 0, z], rotY);
 }
 
 function labelTexture(text, bg, fg) {
@@ -646,17 +682,25 @@ async function buildWorld() {
     'Shoot hoops here, penalties next door.'
   ], { accent: '#e8742c' }), -5, -28);
 
-  // ---- Ramp ----
-  const RAMP = { len: 8, w: 4.5, t: 0.4, angle: 0.26 };
-  const rampQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -RAMP.angle));
-  const rampPos = new THREE.Vector3(-30, Math.sin(RAMP.angle) * RAMP.len / 2 - RAMP.t / 2, 22);
-  const rampMesh = shadowed(box(RAMP.len, RAMP.t, RAMP.w, COLORS.purple, 0.1));
-  rampMesh.position.copy(rampPos);
-  rampMesh.quaternion.copy(rampQuat);
-  scene.add(rampMesh);
-  staticBody(new CANNON.Box(new CANNON.Vec3(RAMP.len / 2, RAMP.t / 2, RAMP.w / 2)), rampPos.toArray(), 0,
-    new CANNON.Quaternion(rampQuat.x, rampQuat.y, rampQuat.z, rampQuat.w));
-  floorText('JUMP →', -24, 22, 0.6, COLORS.purple);
+  // ---- Jump: boost pad, take-off ramp, a gap (where the ring of fire goes), landing ramp ----
+  // It runs up the screen (-x) so you can see the landing coming.
+  addRamp(JUMP.takeoffX, JUMP.z, JUMP.run, JUMP.rise, JUMP.w, COLORS.purple);
+  addRamp(JUMP.landX, JUMP.z, JUMP.landRun, JUMP.landRise, JUMP.w, COLORS.teal, true);
+
+  const boostTex = canvasTexture(512, 256, (ctx, w, h) => {
+    ctx.fillStyle = COLORS.accent; ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = COLORS.paper; ctx.lineWidth = 26; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    for (const x of [110, 250, 390]) {       // chevrons pointing toward -x, the way to go
+      ctx.beginPath(); ctx.moveTo(x + 50, 50); ctx.lineTo(x - 30, h / 2); ctx.lineTo(x + 50, h - 50); ctx.stroke();
+    }
+  });
+  boostMat = new THREE.MeshStandardMaterial({ map: boostTex, emissive: COLORS.accent, emissiveIntensity: 0.3 });
+  const boostMesh = new THREE.Mesh(new THREE.PlaneGeometry(JUMP.boostLen, JUMP.w), boostMat);
+  boostMesh.rotation.x = -Math.PI / 2;
+  boostMesh.position.set(JUMP.boostX, 0.03, JUMP.z);
+  boostMesh.receiveShadow = true;
+  scene.add(boostMesh);
+  floorText('SEND IT ↑', JUMP.boostX + 7, JUMP.z, 0.6, COLORS.accent);
 
   // ---- Traffic cone slalom ----
   for (let i = 0; i < 7; i++) {
@@ -708,7 +752,8 @@ async function buildWorld() {
   const clear = (x, z) =>
     (Math.abs(z) < 9 && x > -48 && x < 10) ||          // main road
     (x > -20 && x < 0 && z < -12 && z > -32) ||        // court
-    (x > -40 && x < -18 && z > -8 && z < 30) ||        // ramp + stack + cones
+    (x > -40 && x < -18 && z > -8 && z < 30) ||        // stack + cones
+    (x > -60 && x < 6 && z > 24 && z < 36) ||          // jump run
     (x > -16 && x < 22 && z > -20 && z < 26) ||        // spawn, pads, signs
     (x > -18 && x < -10 && z > -40 && z < -28) ||      // road to the pitch
     soccer.clear(x, z);                                // soccer pitch
@@ -983,7 +1028,7 @@ const clock = new THREE.Clock();
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.1);
 
-  if (mode === 'drive') drive(dt);
+  if (mode === 'drive') { drive(dt); boost(dt); }
   else {
     for (let i = 0; i < 4; i++) { vehicle.applyEngineForce(0, i); vehicle.setBrake(10, i); }
     updateShoot(dt);
@@ -1036,6 +1081,7 @@ function frame() {
     }
     if (inside) near = p;
   }
+  if (boostMat && !reduceMotion) boostMat.emissiveIntensity = 0.3 + Math.sin(t * 6) * 0.2;
   if (near !== activePad) {
     activePad = near;
     if (near) promptBtn.textContent = near.promptText;
