@@ -152,10 +152,18 @@ function pathStrip(x, z, w, d, rotY = 0) {
   m.receiveShadow = true;
   scene.add(m);
 }
-pathStrip(-20, 0, 48, 5);     // main road heading "up"
-pathStrip(-14, -16, 5, 30);   // side road to the court
-pathStrip(2, 15, 5, 26);      // side road from the spawn to the jump
-pathStrip(-24, 30, 52, 5);    // the jump run
+// Roads run between centreline points and overhang each end by half a width,
+// so corners and T-junctions meet flush.
+const ROAD_W = 5;
+function road(x1, z1, x2, z2) {
+  pathStrip((x1 + x2) / 2, (z1 + z2) / 2, Math.abs(x2 - x1) + ROAD_W, Math.abs(z2 - z1) + ROAD_W);
+}
+road(2, 0, -60, 0);           // main road heading "up"
+road(2, 0, 2, 30);            // spawn to the jump
+road(2, 30, -60, 30);         // the jump run
+road(-60, 30, -60, 0);        // back round to the main road, closing the loop
+road(-14, 0, -14, -34.5);     // past the court to the soccer pitch
+road(-50, 0, -50, -12);       // into the construction lot
 
 // Walls at the edge of the world. The grid is drawn in the shader on world
 // coordinates and only shows within a few metres of the car, so the edge
@@ -422,7 +430,9 @@ function makeSign(title, lines, { width = 6.4, accent = COLORS.accent } = {}) {
     ctx.fillStyle = accent;
     roundRect(ctx, 56, 56, 16, h - 112, 8); ctx.fill();
     ctx.fillStyle = COLORS.ink;
-    ctx.font = '800 92px Inter, Arial, sans-serif';
+    let size = 92;   // shrink long titles to fit
+    ctx.font = `800 ${size}px Inter, Arial, sans-serif`;
+    while (ctx.measureText(title).width > w - 160 && size > 48) { size -= 4; ctx.font = `800 ${size}px Inter, Arial, sans-serif`; }
     ctx.fillText(title, 104, 152);
     ctx.font = '400 44px Inter, Arial, sans-serif';
     ctx.fillStyle = '#5b4a3c';
@@ -473,6 +483,23 @@ function makeTree(scale) {
   g.add(trunk, leaf, leaf2);
   g.scale.setScalar(scale);
   return shadowed(g);
+}
+
+// A knock-over-able traffic cone
+function addCone(x, z) {
+  const cone = new THREE.Group();
+  const c = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.75, 16), mat(COLORS.accent));
+  c.position.y = 0.05;
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.12, 16), mat(COLORS.paper));
+  band.position.y = 0.08;
+  const base = box(0.6, 0.08, 0.6, COLORS.ink, 0.03); base.position.y = -0.33;
+  cone.add(c, band, base);
+  const body = new CANNON.Body({ mass: 0.4, material: groundMat });
+  body.addShape(new CANNON.Cylinder(0.08, 0.3, 0.75, 8));
+  body.position.set(x, 0.4, z);
+  body.sleepSpeedLimit = 0.3;
+  body.sleep();
+  sync(shadowed(cone), body);
 }
 
 // A solid wedge sitting on the ground that rises toward -x, or toward +x when
@@ -670,7 +697,6 @@ async function buildWorld() {
     sync(makeBall(r), body);
   }
   // ---- Soccer pitch + penalty challenge (soccer.js) ----
-  pathStrip(-14, -34, 5, 6);
   soccer = createSoccer({
     THREE, CANNON, scene, world, mat, box, shadowed, canvasTexture, staticBody, sync,
     floorText, makePad, addArrow, makeSign, placeSign, chassisBody, groundMat, placeCar, COLORS
@@ -703,21 +729,44 @@ async function buildWorld() {
   floorText('SEND IT ↑', JUMP.boostX + 7, JUMP.z, 0.6, COLORS.accent);
 
   // ---- Traffic cone slalom ----
-  for (let i = 0; i < 7; i++) {
-    const cone = new THREE.Group();
-    const c = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.75, 16), mat(COLORS.accent));
-    c.position.y = 0.05;
-    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.12, 16), mat(COLORS.paper));
-    band.position.y = 0.08;
-    const base = box(0.6, 0.08, 0.6, COLORS.ink, 0.03); base.position.y = -0.33;
-    cone.add(c, band, base);
-    const body = new CANNON.Body({ mass: 0.4, material: groundMat });
-    body.addShape(new CANNON.Cylinder(0.08, 0.3, 0.75, 8));
-    body.position.set(-34 + (i % 2) * 2.4, 0.4, 2 + i * 2.6);
-    body.sleepSpeedLimit = 0.3;
-    body.sleep();
-    sync(shadowed(cone), body);
-  }
+  for (let i = 0; i < 7; i++) addCone(-34 + (i % 2) * 2.4, 2 + i * 2.6);
+
+  // ---- Under construction: an empty lot at the end of a short road, for whatever comes next ----
+  const LOT = { x: -50, z: -20, w: 20, d: 14 };       // centre and size (w along x, d along z)
+  const dirt = new THREE.Mesh(new THREE.PlaneGeometry(LOT.w, LOT.d), mat('#c99566'));
+  dirt.rotation.x = -Math.PI / 2;
+  dirt.position.set(LOT.x, 0.012, LOT.z);
+  dirt.receiveShadow = true;
+  scene.add(dirt);
+
+  // Striped barriers on three sides; the side facing the road stays open
+  const stripes = canvasTexture(256, 64, (ctx, w, h) => {
+    ctx.fillStyle = COLORS.paper; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = COLORS.accent;
+    for (let x = -h; x < w; x += 64) { ctx.beginPath(); ctx.moveTo(x, h); ctx.lineTo(x + 32, h); ctx.lineTo(x + 32 + h, 0); ctx.lineTo(x + h, 0); ctx.fill(); }
+  });
+  const barrierMat = new THREE.MeshStandardMaterial({ map: stripes, roughness: 0.7 });
+  const BARRIER = 3.2;
+  const barrier = (x, z, rotY) => {
+    const m = shadowed(new THREE.Mesh(new RoundedBoxGeometry(BARRIER, 0.5, 0.25, 2, 0.05), barrierMat));
+    m.position.set(x, 0.8, z);
+    m.rotation.y = rotY;
+    for (const s of [-1, 1]) {
+      const leg = box(0.12, 0.8, 0.5, COLORS.ink, 0.03);
+      leg.position.set(s * (BARRIER / 2 - 0.3), -0.4, 0);
+      m.add(shadowed(leg));
+    }
+    scene.add(m);
+    staticBody(new CANNON.Box(new CANNON.Vec3(BARRIER / 2, 0.55, 0.25)), [x, 0.55, z], rotY);
+  };
+  for (let i = 0; i < 6; i++) barrier(LOT.x - LOT.w / 2 + BARRIER * (i + 0.5) + 0.4, LOT.z - LOT.d / 2, 0);
+  for (const sx of [-1, 1]) for (let i = 0; i < 4; i++) barrier(LOT.x + sx * LOT.w / 2, LOT.z - LOT.d / 2 + BARRIER * (i + 0.5) + 0.6, Math.PI / 2);
+
+  placeSign(makeSign('Under construction 🚧', [
+    'More of my world is coming here.',
+    'Check back soon.'
+  ], { accent: COLORS.accent }), LOT.x - 2, LOT.z - 2);
+  for (const [x, z] of [[-44, -16], [-45.5, -22], [-56, -17]]) addCone(x, z);
 
   // ---- Life sign + family heart ----
   placeSign(makeSign('Life', [
@@ -750,10 +799,12 @@ async function buildWorld() {
   let seed = 11;
   const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   const clear = (x, z) =>
-    (Math.abs(z) < 9 && x > -48 && x < 10) ||          // main road
+    (Math.abs(z) < 9 && x > -66 && x < 10) ||          // main road
     (x > -20 && x < 0 && z < -12 && z > -32) ||        // court
     (x > -40 && x < -18 && z > -8 && z < 30) ||        // stack + cones
-    (x > -60 && x < 6 && z > 24 && z < 36) ||          // jump run
+    (x > -66 && x < 6 && z > 24 && z < 36) ||          // jump run
+    (x > -66 && x < -54 && z > -4 && z < 36) ||        // road back to the main road
+    (x > -64 && x < -36 && z > -31 && z < -4) ||       // construction lot
     (x > -16 && x < 22 && z > -20 && z < 26) ||        // spawn, pads, signs
     (x > -18 && x < -10 && z > -40 && z < -28) ||      // road to the pitch
     soccer.clear(x, z);                                // soccer pitch
