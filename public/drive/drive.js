@@ -739,7 +739,7 @@ async function buildWorld() {
   dirt.receiveShadow = true;
   scene.add(dirt);
 
-  // Striped barriers on three sides; the side facing the road stays open
+  // Striped barriers all the way round, so it's closed off until there's something to see
   const stripes = canvasTexture(256, 64, (ctx, w, h) => {
     ctx.fillStyle = COLORS.paper; ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = COLORS.accent;
@@ -759,7 +759,7 @@ async function buildWorld() {
     scene.add(m);
     staticBody(new CANNON.Box(new CANNON.Vec3(BARRIER / 2, 0.55, 0.25)), [x, 0.55, z], rotY);
   };
-  for (let i = 0; i < 6; i++) barrier(LOT.x - LOT.w / 2 + BARRIER * (i + 0.5) + 0.4, LOT.z - LOT.d / 2, 0);
+  for (const sz of [-1, 1]) for (let i = 0; i < 6; i++) barrier(LOT.x - LOT.w / 2 + BARRIER * (i + 0.5) + 0.4, LOT.z + sz * LOT.d / 2, 0);
   for (const sx of [-1, 1]) for (let i = 0; i < 4; i++) barrier(LOT.x + sx * LOT.w / 2, LOT.z - LOT.d / 2 + BARRIER * (i + 0.5) + 0.6, Math.PI / 2);
 
   placeSign(makeSign('Under construction 🚧', [
