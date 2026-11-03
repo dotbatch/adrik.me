@@ -5,7 +5,7 @@
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // ---- Theme toggle (remembers the visitor's choice) ----
+  // ---- Theme toggle: dark by default, light on request (remembers the choice) ----
   try {
     var saved = localStorage.getItem('theme');
     if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
@@ -14,9 +14,7 @@
   var toggle = document.querySelector('.theme-toggle');
   if (toggle) {
     toggle.addEventListener('click', function () {
-      var current = root.getAttribute('data-theme') ||
-        (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-      var next = current === 'light' ? 'dark' : 'light';
+      var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
       root.setAttribute('data-theme', next);
       try { localStorage.setItem('theme', next); } catch (e) { /* ignore */ }
     });

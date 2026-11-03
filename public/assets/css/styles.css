@@ -37,21 +37,6 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --bg: #f7f6f2;
-    --bg-alt: #efede7;
-    --surface: #ffffff;
-    --line: #e0ddd5;
-    --text: #16171b;
-    --muted: #5e616b;
-    --accent: #e2511a;
-    --accent-ink: #ffffff;
-    --hero-overlay: linear-gradient(180deg, rgba(247, 246, 242, .80) 0%, rgba(247, 246, 242, .92) 70%, var(--bg) 100%);
-    color-scheme: light;
-  }
-}
-
 /* ==========================================================================
    Base
    ========================================================================== */
@@ -151,10 +136,6 @@ main { counter-reset: section; }
 .theme-toggle .i-sun { display: none; }
 :root[data-theme="light"] .theme-toggle .i-sun { display: block; }
 :root[data-theme="light"] .theme-toggle .i-moon { display: none; }
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) .theme-toggle .i-sun { display: block; }
-  :root:not([data-theme="dark"]) .theme-toggle .i-moon { display: none; }
-}
 
 @media (max-width: 640px) {
   .nav__links a { padding: 8px 9px; font-size: .85rem; }
