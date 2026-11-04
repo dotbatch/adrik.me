@@ -350,7 +350,7 @@ let steer = 0;
 let throttle = 0;
 
 // The jump runs toward -x along z = JUMP.z. The take-off lip is at x = -24 and the
-// landing ramp's top at x = -32: the gap between is where the ring of fire will go.
+// landing ramp's top at x = -32: the ring of fire floats over the gap between.
 // The landing ramp is long and gentle so both normal and boosted jumps land on it.
 const JUMP = { z: 30, w: 5, run: 10, rise: 3, landRun: 14, landRise: 2.6, takeoffX: -19, landX: -39, boostX: -9, boostLen: 6 };
 // The car reaches ~14 m/s at the lip from almost any run-up; the boost gets it
@@ -583,6 +583,79 @@ function addArrow(pad, color) {
   pad.arrow = arrow;
 }
 
+// Ring of fire over the jump gap. A boosted full-throttle launch puts the car's
+// centre about 4 m up at mid-gap; the ring sits a little higher because the
+// cabin sticks up more than the wheels hang down.
+// Visual only for now: no collider, the car passes through.
+const RING = { x: -28, y: 4.2, z: JUMP.z, r: 2.1, tube: 0.16, flames: 180 };
+let fireRing = null;
+function addFireRing() {
+  const group = new THREE.Group();
+  group.position.set(RING.x, RING.y, RING.z);
+  const torus = new THREE.Mesh(
+    new THREE.TorusGeometry(RING.r, RING.tube, 12, 64),
+    new THREE.MeshStandardMaterial({ color: COLORS.ink, emissive: COLORS.accent, emissiveIntensity: 0.4, roughness: 0.5 })
+  );
+  torus.rotation.y = Math.PI / 2;   // face down the run
+  torus.castShadow = true;
+
+  // Flames: one Points system, animated entirely in the shader. Each particle
+  // starts on the ring, rises, shrinks and fades, then loops on its own phase.
+  const pos = new Float32Array(RING.flames * 3);
+  const phase = new Float32Array(RING.flames);
+  for (let i = 0; i < RING.flames; i++) {
+    const a = (i / RING.flames) * Math.PI * 2;
+    const r = RING.r + (Math.random() - 0.5) * RING.tube * 2;
+    pos.set([(Math.random() - 0.5) * 0.2, Math.cos(a) * r, Math.sin(a) * r], i * 3);
+    phase[i] = Math.random();
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
+  const uniforms = { uTime: { value: 0 }, uScale: { value: 1 } };
+  const flames = new THREE.Points(geo, new THREE.ShaderMaterial({
+    uniforms,
+    transparent: true,
+    depthWrite: false,
+    vertexShader: `
+      uniform float uTime, uScale;
+      attribute float aPhase;
+      varying float vLife;
+      void main() {
+        float life = fract(uTime * (1.2 + fract(aPhase * 13.7) * 0.8) + aPhase);
+        vLife = life;
+        vec3 p = position;
+        p.y += life * 1.5;
+        p.x += sin(uTime * 6.0 + aPhase * 20.0) * 0.08 * life;   // a little sideways lick
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        // 0.9 m sprite, shrinking as it rises, sized in drawing-buffer pixels
+        gl_PointSize = 0.9 * (1.0 - life * 0.7) * projectionMatrix[1][1] * uScale / -mv.z;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      varying float vLife;
+      void main() {
+        float d = length(gl_PointCoord - 0.5);
+        if (d > 0.5) discard;
+        float a = smoothstep(0.5, 0.15, d) * (1.0 - vLife * vLife) * smoothstep(0.0, 0.15, vLife);
+        gl_FragColor = vec4(mix(vec3(1.0, 0.85, 0.35), vec3(1.0, 0.3, 0.05), vLife), a);
+      }`
+  }));
+
+  const light = new THREE.PointLight(COLORS.accent, 25, 12, 2);
+  group.add(torus, flames, light);
+  scene.add(group);
+  fireRing = { uniforms, light };
+}
+
+function updateFireRing(t) {
+  if (!fireRing) return;
+  fireRing.uniforms.uScale.value = canvas.height / 2;
+  if (reduceMotion) return;   // flames hold still, light steady
+  fireRing.uniforms.uTime.value = t;
+  fireRing.light.intensity = 25 * (0.85 + Math.sin(t * 13) * 0.08 + Math.sin(t * 7.3) * 0.07);
+}
+
 // ---------------------------------------------------------------------------
 // Build the world (needs the font)
 // ---------------------------------------------------------------------------
@@ -708,10 +781,11 @@ async function buildWorld() {
     'Shoot hoops here, penalties next door.'
   ], { accent: '#e8742c' }), -5, -28);
 
-  // ---- Jump: boost pad, take-off ramp, a gap (where the ring of fire goes), landing ramp ----
+  // ---- Jump: boost pad, take-off ramp, ring of fire over the gap, landing ramp ----
   // It runs up the screen (-x) so you can see the landing coming.
   addRamp(JUMP.takeoffX, JUMP.z, JUMP.run, JUMP.rise, JUMP.w, COLORS.purple);
   addRamp(JUMP.landX, JUMP.z, JUMP.landRun, JUMP.landRise, JUMP.w, COLORS.teal, true);
+  addFireRing();
 
   const boostTex = canvasTexture(512, 256, (ctx, w, h) => {
     ctx.fillStyle = COLORS.accent; ctx.fillRect(0, 0, w, h);
@@ -1133,6 +1207,7 @@ function frame() {
     if (inside) near = p;
   }
   if (boostMat && !reduceMotion) boostMat.emissiveIntensity = 0.3 + Math.sin(t * 6) * 0.2;
+  updateFireRing(t);
   if (near !== activePad) {
     activePad = near;
     if (near) promptBtn.textContent = near.promptText;
