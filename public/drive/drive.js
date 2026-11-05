@@ -586,8 +586,7 @@ function addArrow(pad, color) {
 // Ring of fire over the jump gap. A boosted full-throttle launch puts the car's
 // centre about 4 m up at mid-gap; the ring sits a little higher because the
 // cabin sticks up more than the wheels hang down.
-// Visual only for now: no collider, the car passes through.
-const RING = { x: -28, y: 4.2, z: JUMP.z, r: 2.1, tube: 0.16, flames: 180 };
+const RING = { x: -28, y: 4.2, z: JUMP.z, r: 2.1, tube: 0.16, flames: 180, sparks: 60 };
 let fireRing = null;
 function addFireRing() {
   const group = new THREE.Group();
@@ -643,17 +642,87 @@ function addFireRing() {
   }));
 
   const light = new THREE.PointLight(COLORS.accent, 25, 12, 2);
-  group.add(torus, flames, light);
+
+  // Sparks for a clean pass: a burst of points under gravity, simulated in JS
+  // only while it's alive
+  const sparkGeo = new THREE.BufferGeometry();
+  sparkGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(RING.sparks * 3), 3));
+  const sparks = new THREE.Points(sparkGeo, new THREE.PointsMaterial({ color: '#ffd27a', size: 0.22, transparent: true, depthWrite: false }));
+  sparks.visible = false;
+  group.add(torus, flames, light, sparks);
   scene.add(group);
-  fireRing = { uniforms, light };
+
+  // Rim collider: a circle of small spheres like the hoop's rim, so clipping the
+  // ring bounces the car off instead of stopping it dead
+  const rim = new CANNON.Body({ mass: 0, material: groundMat });
+  for (let i = 0; i < 32; i++) {
+    const a = (i / 32) * Math.PI * 2;
+    rim.addShape(new CANNON.Sphere(RING.tube), new CANNON.Vec3(0, Math.cos(a) * RING.r, Math.sin(a) * RING.r));
+  }
+  rim.position.set(RING.x, RING.y, RING.z);
+  world.addBody(rim);
+  chassisBody.addEventListener('collide', (e) => { if (e.body === rim) fireRing.touchedAt = clock.elapsedTime; });
+
+  fireRing = { uniforms, light, sparks, sparkVel: new Float32Array(RING.sparks * 3), sparkLife: 0, flash: 0, touchedAt: -Infinity, prevX: null, count: 0 };
 }
 
-function updateFireRing(t) {
+// A pass is the car's chassis centre crossing the ring's plane inside the ring,
+// without having touched the rim on the way through
+const jumpUI = { chip: document.getElementById('jump-chip'), count: document.getElementById('jump-count'), msg: document.getElementById('jump-msg') };
+const CHASSIS_CENTRE = new CANNON.Vec3(0, COM_DROP, 0);
+const _carCentre = new CANNON.Vec3();
+function checkRingPass(t) {
+  chassisBody.pointToWorldFrame(CHASSIS_CENTRE, _carCentre);
+  const { x, y, z } = _carCentre;
+  const prevX = fireRing.prevX;
+  fireRing.prevX = x;
+  if (prevX === null || (prevX - RING.x) * (x - RING.x) > 0 || Math.abs(prevX - x) > 2) return; // no crossing, or a teleport
+  if (Math.hypot(y - RING.y, z - RING.z) > RING.r - RING.tube || t - fireRing.touchedAt < 0.5) return;
+  fireRing.count++;
+  jumpUI.count.textContent = fireRing.count;
+  jumpUI.chip.hidden = false;
+  jumpUI.msg.textContent = fireRing.count === 1 ? 'Nice!' : `Nice! ×${fireRing.count}`;
+  jumpUI.msg.classList.remove('pop');
+  void jumpUI.msg.offsetWidth;   // restart the animation
+  jumpUI.msg.classList.add('pop');
+  fireRing.flash = 1;
+  if (!reduceMotion) burstSparks(x - RING.x, y - RING.y, z - RING.z);
+}
+
+function burstSparks(x, y, z) {
+  const pos = fireRing.sparks.geometry.attributes.position.array;
+  const vel = fireRing.sparkVel;
+  for (let i = 0; i < RING.sparks; i++) {
+    pos.set([x, y, z], i * 3);
+    const a = Math.random() * Math.PI * 2, s = 3 + Math.random() * 4;
+    vel.set([(Math.random() - 0.5) * 3, Math.cos(a) * s + 2, Math.sin(a) * s], i * 3);
+  }
+  fireRing.sparkLife = 1;
+  fireRing.sparks.visible = true;
+}
+
+function updateFireRing(t, dt) {
   if (!fireRing) return;
+  if (mode === 'drive') checkRingPass(t);
   fireRing.uniforms.uScale.value = canvas.height / 2;
-  if (reduceMotion) return;   // flames hold still, light steady
-  fireRing.uniforms.uTime.value = t;
-  fireRing.light.intensity = 25 * (0.85 + Math.sin(t * 13) * 0.08 + Math.sin(t * 7.3) * 0.07);
+  // Light flares on a pass, then settles back to its flicker
+  fireRing.flash = Math.max(0, fireRing.flash - dt * 2);
+  const flicker = reduceMotion ? 0.85 : 0.85 + Math.sin(t * 13) * 0.08 + Math.sin(t * 7.3) * 0.07;
+  fireRing.light.intensity = 25 * (flicker + fireRing.flash * 3);
+  if (!reduceMotion) fireRing.uniforms.uTime.value = t;   // otherwise flames hold still
+
+  if (fireRing.sparkLife > 0) {
+    fireRing.sparkLife -= dt;
+    const attr = fireRing.sparks.geometry.attributes.position;
+    const vel = fireRing.sparkVel;
+    for (let i = 0; i < attr.array.length; i++) {
+      if (i % 3 === 1) vel[i] -= 9.8 * dt;
+      attr.array[i] += vel[i] * dt;
+    }
+    attr.needsUpdate = true;
+    fireRing.sparks.material.opacity = Math.max(0, fireRing.sparkLife);
+    fireRing.sparks.visible = fireRing.sparkLife > 0;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1207,7 +1276,7 @@ function frame() {
     if (inside) near = p;
   }
   if (boostMat && !reduceMotion) boostMat.emissiveIntensity = 0.3 + Math.sin(t * 6) * 0.2;
-  updateFireRing(t);
+  updateFireRing(t, dt);
   if (near !== activePad) {
     activePad = near;
     if (near) promptBtn.textContent = near.promptText;
