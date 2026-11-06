@@ -9,14 +9,16 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { createSoccer } from './soccer.js';
 import {
   COLORS, CAM_OFFSET, FACE, canvas, renderer, scene, camera, sun, SUN_OFFSET, world,
-  groundMat, bouncyMat, synced, sync, staticBody, mat, shadowed, box, canvasTexture,
-  roundRect, clock, reduceMotion
+  groundMat, bouncyMat, synced, sync, staticBody, mat, shadowed, box, canvasTexture, clock,
+  reduceMotion
 } from './core.js';
 import { input, KEYMAP, clearInput } from './input.js';
 import {
   COM_DROP, chassisBody, carMesh, resetCar, placeCar, drive, setCarVisible, parkCar,
   recoverCar
 } from './car.js';
+import { makeSign, placeSign, makeBall, makeTree, addCone, labelTexture, floorText } from './props.js';
+import { makePad, addArrow, activePad, dismissPad, updatePads } from './pads.js';
 
 const FONT_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json';
 const LINKEDIN = 'https://www.linkedin.com/in/adrik-grigorian/';
@@ -125,88 +127,6 @@ function boost(dt) {
   if (v > 2 && v < BOOST_SPEED) chassisBody.velocity.x -= (BOOST_SPEED - v) * Math.min(1, dt * 6);
 }
 
-// ---------------------------------------------------------------------------
-// World content
-// ---------------------------------------------------------------------------
-function makeSign(title, lines, { width = 6.4, accent = COLORS.accent } = {}) {
-  const tex = canvasTexture(1024, 560, (ctx, w, h) => {
-    ctx.fillStyle = COLORS.paper;
-    roundRect(ctx, 0, 0, w, h, 48); ctx.fill();
-    ctx.fillStyle = accent;
-    roundRect(ctx, 56, 56, 16, h - 112, 8); ctx.fill();
-    ctx.fillStyle = COLORS.ink;
-    let size = 92;   // shrink long titles to fit
-    ctx.font = `800 ${size}px Inter, Arial, sans-serif`;
-    while (ctx.measureText(title).width > w - 160 && size > 48) { size -= 4; ctx.font = `800 ${size}px Inter, Arial, sans-serif`; }
-    ctx.fillText(title, 104, 152);
-    ctx.font = '400 44px Inter, Arial, sans-serif';
-    ctx.fillStyle = '#5b4a3c';
-    lines.forEach((l, i) => ctx.fillText(l, 104, 250 + i * 68));
-  });
-  const height = width * (560 / 1024);
-  const g = new THREE.Group();
-  const board = new THREE.Mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, transparent: true }));
-  board.position.y = 1.4 + height / 2;
-  const back = box(width + 0.1, height + 0.1, 0.12, COLORS.ink, 0.05);
-  back.position.set(0, board.position.y, -0.08);
-  for (const x of [-width / 2 + 0.6, width / 2 - 0.6]) {
-    const post = box(0.16, 1.5, 0.16, COLORS.ink, 0.04);
-    post.position.set(x, 0.75, -0.1);
-    g.add(post);
-  }
-  g.add(board, back);
-  return shadowed(g);
-}
-
-function placeSign(sign, x, z) {
-  sign.position.set(x, 0, z);
-  sign.rotation.y = FACE;
-  scene.add(sign);
-  staticBody(new CANNON.Box(new CANNON.Vec3(3, 0.75, 0.15)), [x, 0.75, z], FACE);
-}
-
-// Basketball with seams
-function makeBall(r) {
-  const g = new THREE.Group();
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), mat('#e8742c')));
-  const seam = new THREE.TorusGeometry(r * 1.005, r * 0.035, 6, 48);
-  const s1 = new THREE.Mesh(seam, mat(COLORS.ink));
-  const s2 = new THREE.Mesh(seam, mat(COLORS.ink)); s2.rotation.y = Math.PI / 2;
-  const s3 = new THREE.Mesh(seam, mat(COLORS.ink)); s3.rotation.x = Math.PI / 2;
-  g.add(s1, s2, s3);
-  return shadowed(g);
-}
-
-function makeTree(scale) {
-  const g = new THREE.Group();
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 1.2, 8), mat(COLORS.trunk));
-  trunk.position.y = 0.6;
-  const leaf = new THREE.Mesh(new THREE.IcosahedronGeometry(1.1, 0), mat(COLORS.leaf, { flatShading: true }));
-  leaf.position.y = 1.9;
-  const leaf2 = new THREE.Mesh(new THREE.IcosahedronGeometry(0.75, 0), mat('#94c47d', { flatShading: true }));
-  leaf2.position.set(0.3, 2.6, 0.1);
-  g.add(trunk, leaf, leaf2);
-  g.scale.setScalar(scale);
-  return shadowed(g);
-}
-
-// A knock-over-able traffic cone
-function addCone(x, z) {
-  const cone = new THREE.Group();
-  const c = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.75, 16), mat(COLORS.accent));
-  c.position.y = 0.05;
-  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.12, 16), mat(COLORS.paper));
-  band.position.y = 0.08;
-  const base = box(0.6, 0.08, 0.6, COLORS.ink, 0.03); base.position.y = -0.33;
-  cone.add(c, band, base);
-  const body = new CANNON.Body({ mass: 0.4, material: groundMat });
-  body.addShape(new CANNON.Cylinder(0.08, 0.3, 0.75, 8));
-  body.position.set(x, 0.4, z);
-  body.sleepSpeedLimit = 0.3;
-  body.sleep();
-  sync(shadowed(cone), body);
-}
-
 // A solid wedge sitting on the ground that rises toward -x, or toward +x when
 // flipped. Solid (not a tilted slab) so there's no gap to drive under.
 function addRamp(x, z, run, rise, w, color, flip = false) {
@@ -223,68 +143,6 @@ function addRamp(x, z, run, rise, w, color, flip = false) {
     vertices: v.map((p) => new CANNON.Vec3(...p)),
     faces: [[0, 1, 2], [3, 5, 4], [0, 3, 4, 1], [1, 4, 5, 2], [0, 2, 5, 3]]
   }), [x, 0, z], rotY);
-}
-
-function labelTexture(text, bg, fg) {
-  return canvasTexture(256, 256, (ctx, w, h) => {
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.lineWidth = 10; ctx.strokeRect(5, 5, w - 10, h - 10);
-    ctx.fillStyle = fg;
-    let size = 64;
-    ctx.font = `800 ${size}px Inter, Arial, sans-serif`;
-    while (ctx.measureText(text).width > w - 40 && size > 24) { size -= 4; ctx.font = `800 ${size}px Inter, Arial, sans-serif`; }
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(text, w / 2, h / 2);
-  });
-}
-
-// ---- Floor text painted on the ground ----
-function floorText(text, x, z, size = 1, color = COLORS.path) {
-  const tex = canvasTexture(1024, 256, (ctx, w, h) => {
-    ctx.fillStyle = color;
-    ctx.font = '800 150px Inter, Arial, sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(text, w / 2, h / 2);
-  });
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(8 * size, 2 * size), new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 1 }));
-  // lie flat, then turn so the text reads upright from the camera
-  m.rotation.order = 'YXZ';
-  m.rotation.set(-Math.PI / 2, FACE, 0);
-  m.position.set(x, 0.02, z);
-  m.receiveShadow = true;
-  scene.add(m);
-}
-
-// ---- Interactive pads: drive onto them, press Enter ----
-const pads = [];
-let activePad = null;
-function makePad(label, x, z, color, action, promptText = `Open ${label} ↵`, enabled = null) {
-  const ring = new THREE.Mesh(new THREE.RingGeometry(1.7, 2.1, 48), new THREE.MeshBasicMaterial({ color }));
-  ring.rotation.x = -Math.PI / 2;
-  ring.position.set(x, 0.03, z);
-  const disc = new THREE.Mesh(new THREE.CircleGeometry(1.7, 48), new THREE.MeshStandardMaterial({ color, transparent: true, opacity: 0.18 }));
-  disc.rotation.x = -Math.PI / 2;
-  disc.position.set(x, 0.025, z);
-  scene.add(ring, disc);
-  floorText(label, x + Math.sin(FACE) * 3.2, z + Math.cos(FACE) * 3.2, 0.5, color);
-  const pad = { label, promptText, pos: new THREE.Vector2(x, z), ring, action, enabled };
-  pads.push(pad);
-  return pad;
-}
-
-// Arrow hovering over a pad so people know they can play there. A four-sided
-// head keeps the spin visible (a round cone would look still).
-const ARROW_Y = 1.6; // low enough that, from the tilted camera, it still reads as over the pad
-function addArrow(pad, color) {
-  const arrow = new THREE.Group();
-  const head = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.7, 4), mat(color, { flatShading: true }));
-  head.rotation.x = Math.PI;                         // point at the ground
-  const shaft = box(0.22, 0.6, 0.22, color, 0.04);
-  shaft.position.y = 0.6;
-  arrow.add(head, shaft);
-  arrow.position.set(pad.pos.x, ARROW_Y, pad.pos.y);
-  scene.add(shadowed(arrow));
-  pad.arrow = arrow;
 }
 
 // Ring of fire over the jump gap. A boosted full-throttle launch puts the car's
@@ -752,8 +610,7 @@ function enterShoot() {
   if (soccer && soccer.active) soccer.stop();
   mode = 'shoot';
   document.body.classList.add('is-shooting');
-  prompt.classList.remove('is-visible');
-  activePad = null;
+  dismissPad();
   clearInput();
   setCarVisible(false);
   shoot.arrow.visible = true;
@@ -911,9 +768,6 @@ shootBtn.addEventListener('pointerleave', release);
 // ---------------------------------------------------------------------------
 // Loop
 // ---------------------------------------------------------------------------
-const prompt = document.getElementById('prompt');
-const promptBtn = document.getElementById('prompt-btn');
-promptBtn.addEventListener('click', () => activePad && activePad.action());
 
 const camTarget = new THREE.Vector3();
 const camPos = new THREE.Vector3();
@@ -954,30 +808,10 @@ function frame() {
   sun.target.position.copy(camTarget);
   edgeMat.uniforms.uCar.value.copy(carMesh.position);
 
-  // Pads (not while shooting)
-  const car2 = new THREE.Vector2(carMesh.position.x, carMesh.position.z);
   const t = clock.elapsedTime;
-  let near = null;
-  for (const p of pads) {
-    const open = mode === 'drive' && (!p.enabled || p.enabled());
-    const inside = open && p.pos.distanceTo(car2) < 2.2;
-    p.ring.scale.setScalar(inside ? 1.08 : 1 + Math.sin(t * 3) * 0.03);
-    if (p.arrow) {
-      p.arrow.visible = open && !inside;
-      if (!reduceMotion) {
-        p.arrow.rotation.y = t * 1.2;
-        p.arrow.position.y = ARROW_Y + Math.sin(t * 2) * 0.15;   // gentle bob
-      }
-    }
-    if (inside) near = p;
-  }
+  updatePads(carMesh.position, t, mode === 'drive');
   if (boostMat && !reduceMotion) boostMat.emissiveIntensity = 0.3 + Math.sin(t * 6) * 0.2;
   updateFireRing(t, dt);
-  if (near !== activePad) {
-    activePad = near;
-    if (near) promptBtn.textContent = near.promptText;
-    prompt.classList.toggle('is-visible', !!near);
-  }
 
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
