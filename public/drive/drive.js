@@ -213,7 +213,11 @@ const SPAWN = new CANNON.Vec3(4, 1.6, 0);
 // The box sits COM_DROP above the body's origin, which puts the centre of mass
 // down near the axles. A low centre of mass is what keeps a car from tipping.
 const COM_DROP = 0.35;
-const chassisBody = new CANNON.Body({ mass: 150, angularDamping: 0.7, linearDamping: 0.08 });
+// Only the wheels grip. With a frictionless body the car slides off a ramp's side
+// edge instead of wedging on it at full throttle.
+const chassisMat = new CANNON.Material('chassis');
+world.addContactMaterial(new CANNON.ContactMaterial(chassisMat, groundMat, { friction: 0, restitution: 0.15 }));
+const chassisBody = new CANNON.Body({ mass: 150, material: chassisMat, angularDamping: 0.7, linearDamping: 0.08 });
 chassisBody.addShape(new CANNON.Box(new CANNON.Vec3(1.1, 0.3, 0.55)), new CANNON.Vec3(0, COM_DROP, 0));
 chassisBody.position.copy(SPAWN);
 chassisBody.allowSleep = false;
