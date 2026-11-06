@@ -6,11 +6,10 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { createSoccer } from './soccer.js';
 import {
-  COLORS, FACE, scene, world, groundMat, sync, staticBody, mat, shadowed, box, canvasTexture
+  COLORS, FACE, scene, groundMat, sync, staticBody, mat, shadowed, box, canvasTexture
 } from './core.js';
-import { chassisBody, placeCar } from './car.js';
 import { makeSign, placeSign, makeTree, addCone, labelTexture, floorText } from './props.js';
-import { makePad, addArrow } from './pads.js';
+import { makePad } from './pads.js';
 import { buildJump } from './jump.js';
 import { buildCourt } from './hoops.js';
 
@@ -171,10 +170,7 @@ export async function buildWorld() {
   buildCourt(() => { if (soccer.active) soccer.stop(); });
 
   // ---- Soccer pitch + penalty challenge (soccer.js) ----
-  soccer = createSoccer({
-    THREE, CANNON, scene, world, mat, box, shadowed, canvasTexture, staticBody, sync,
-    floorText, makePad, addArrow, makeSign, placeSign, chassisBody, groundMat, placeCar, COLORS
-  });
+  soccer = createSoccer();
 
   placeSign(makeSign('Sports', [
     'Basketball these days, and soccer too.',

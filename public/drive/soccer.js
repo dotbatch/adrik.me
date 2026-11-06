@@ -1,8 +1,15 @@
 // Penalty challenge: a small pitch with a goal and a keeper.
 // Park on the green pad, then drive into the ball to shoot. Five shots per round.
 //
-// drive.js owns the renderer, physics world and car; it hands what this module
-// needs in `ctx` and calls update() once per frame after the physics step.
+// drive.js calls update() once per frame after the physics step.
+import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
+import {
+  COLORS, scene, world, groundMat, sync, staticBody, mat, shadowed, box, canvasTexture
+} from './core.js';
+import { makeSign, placeSign, floorText } from './props.js';
+import { makePad, addArrow } from './pads.js';
+import { chassisBody, placeCar } from './car.js';
 
 const PITCH = { x: -14, z: -46, len: 26, wid: 18 };   // centre and size, metres
 const GOAL_X = PITCH.x - PITCH.len / 2;                // goal line (x = -27)
@@ -13,9 +20,7 @@ const BALL_R = 0.42;
 const SHOTS = 5;
 const BEST_KEY = 'drive.penalties.best';
 
-export function createSoccer(ctx) {
-  const { THREE, CANNON, scene, world, mat, box, shadowed, canvasTexture, staticBody, sync,
-    floorText, makePad, addArrow, makeSign, placeSign, chassisBody, groundMat, placeCar, COLORS } = ctx;
+export function createSoccer() {
 
   const ui = {
     root: document.getElementById('penalty'),
