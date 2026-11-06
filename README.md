@@ -67,6 +67,6 @@ Copy-Item .env.deploy.example .env.deploy   # then fill it in; it is git-ignored
 ## Drive mode
 
 `public/drive/` is a separate page, inspired by bruno-simon.com: drive a little car around, knock over the
-3D name, push basketballs, read the signs. All of it is built in `public/drive/drive.js` from primitive
+3D name, push basketballs, read the signs. All of it is built in `public/drive/` from primitive
 shapes; three.js and cannon-es (physics) load from jsDelivr. It is linked from a small
 "Drive" button in the main site's nav and from the footer.

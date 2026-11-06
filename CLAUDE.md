@@ -100,7 +100,8 @@ public/              Everything that ships to the host
   assets/css/        styles.css (light + dark themes via tokens on :root)
   assets/js/         main.js, hero3d.js (3D hero), dash.js (About dashboard)
   assets/img/        Images, favicon, og-card
-  drive/             Drivable world (drive.js, index.html), linked from the nav
+  drive/             Drivable world, linked from the nav: drive.js (keyboard and frame loop), core.js
+                     (renderer, physics, helpers), car, input, world, props, pads, jump, hoops, soccer
   .htaccess          HTTPS, caching (HTML/CSS/JS revalidate), security headers
 scripts/deploy.ps1   Manual FTP deploy
 .github/workflows/   Automatic deploy

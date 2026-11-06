@@ -141,6 +141,5 @@ Small things that make it feel like Bruno Simon's site.
 
 ## Housekeeping
 
-- Split `drive.js` into modules (`car.js`, `world.js`, `soccer.js`, `fire-ring.js`) as it grows
 - Pin versions and consider self-hosting three.js and cannon-es instead of relying on the CDN
 - Basic performance budget: under 2 s to first frame on broadband, 60 fps on desktop
