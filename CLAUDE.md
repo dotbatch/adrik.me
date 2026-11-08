@@ -101,7 +101,8 @@ public/              Everything that ships to the host
   assets/js/         main.js, hero3d.js (3D hero), dash.js (About dashboard)
   assets/img/        Images, favicon, og-card
   drive/             Drivable world, linked from the nav: drive.js (keyboard and frame loop), core.js
-                     (renderer, physics, helpers), car, input, world, props, pads, jump, hoops, soccer
+                     (renderer, physics, helpers), car, input, world, props, pads, jump, hoops, soccer,
+                     valet
   .htaccess          HTTPS, caching (HTML/CSS/JS revalidate), security headers
 scripts/deploy.ps1   Manual FTP deploy
 .github/workflows/   Automatic deploy
@@ -116,7 +117,7 @@ DEPLOYMENT.md        How deploys work; ROADMAP-drive.md for drive-mode plans
 - 3D and physics: pause rendering when off screen, cap pixel ratio at 2
 - **New drive-mode area = new street sign.** When adding an area or mini game (e.g. a valet with different
   cars), add a blade pointing to it with `addSignpost` in `world.js`: on the nearest junction's post, and on
-  the spawn post if it's a main attraction. Replace the "Coming soon" blade once that lot is built on
+  the spawn post if it's a main attraction. Aim it at the area's centre (`to: [x, z]`)
 
 ### Boundaries: Never Modify
 - `.env.deploy` or any credentials

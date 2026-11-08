@@ -17,6 +17,8 @@ Status key: ✅ shipped · 🚧 in progress · 🔜 next · 💡 idea
 - Soccer pitch with a 5-shot penalty challenge (`soccer.js`)
 - Ramp with a jump, traffic-cone slalom
 - Family heart
+- Valet lot with parked cars (pickup, sports car, van) you can swap into (`valet.js`)
+- Street signposts at the junctions pointing to each area
 - Link pads for LinkedIn and back to adrik.me
 - Keyboard and touch controls, auto-flip, reset
 - Out of experimental: indexed, in the sitemap, linked from a small "Drive" button in the main nav and the footer
@@ -131,7 +133,6 @@ Small things that make it feel like Bruno Simon's site.
 
 ## Phase 4: More of the world 💡
 
-- **Cars area:** a small showroom or garage of low-poly cars to drive between
 - **Biking trail:** a winding path with a bike you can knock over, or a time trial
 - **Movies corner:** a drive-in screen showing a looping trailer-style animation
 - **Tech area:** stack the crates into something, or a "deploy" button that launches confetti
