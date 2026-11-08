@@ -36,6 +36,10 @@ FileETag MTime Size
 # load. Unchanged files get a tiny 304 and the cached copy is used; changed
 # files download right away, so deploys show up without a hard refresh.
 <IfModule mod_headers.c>
+  # Compressed responses carry ETags like "abc-br" or "abc-gzip", but Apache
+  # compares against the uncompressed "abc", so revalidation never matched and
+  # every reload re-downloaded the file. Strip the suffix so 304s work again.
+  RequestHeader edit "If-None-Match" "^\"(.*)-(gzip|br)\"$" "\"$1\""
   <FilesMatch "\.(html|css|js|mjs)$">
     Header set Cache-Control "no-cache"
     Header unset Expires
