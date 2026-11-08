@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import {
-  COLORS, FACE, scene, groundMat, sync, staticBody, mat, shadowed, box, canvasTexture,
+  COLORS, CAM_OFFSET, FACE, scene, groundMat, sync, staticBody, mat, shadowed, box, canvasTexture,
   roundRect
 } from './core.js';
 
@@ -41,6 +41,62 @@ export function placeSign(sign, x, z) {
   sign.rotation.y = FACE;
   scene.add(sign);
   staticBody(new CANNON.Box(new CANNON.Vec3(3, 0.75, 0.15)), [x, 0.75, z], FACE);
+}
+
+// ---- Street signpost: a pole with arrow blades pointing the way ----
+// The camera angle never changes, so each arrow is drawn pointing where its
+// world direction appears on screen, and the blade sticks out on that side.
+const toCamera = new THREE.Quaternion().setFromRotationMatrix(
+  new THREE.Matrix4().lookAt(CAM_OFFSET, new THREE.Vector3(), new THREE.Vector3(0, 1, 0))
+).invert();
+const BLADE_W = 2.6, BLADE_H = 0.62, BLADE_GAP = 0.8;
+
+function bladeTexture(text, color, angle, right) {
+  return canvasTexture(512, 128, (ctx, w, h) => {
+    ctx.fillStyle = color;
+    roundRect(ctx, 0, 0, w, h, 24); ctx.fill();
+    ctx.fillStyle = COLORS.paper;
+    let size = 60;
+    ctx.font = `800 ${size}px Inter, Arial, sans-serif`;
+    while (ctx.measureText(text).width > w - 170 && size > 32) { size -= 4; ctx.font = `800 ${size}px Inter, Arial, sans-serif`; }
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = right ? 'left' : 'right';
+    ctx.fillText(text, right ? 32 : w - 32, h / 2 + 3);
+    ctx.save();
+    ctx.translate(right ? w - 66 : 66, h / 2);
+    ctx.rotate(-angle);   // canvas y runs down, screen y runs up
+    ctx.beginPath();
+    ctx.moveTo(40, 0); ctx.lineTo(6, -32); ctx.lineTo(6, -12); ctx.lineTo(-38, -12);
+    ctx.lineTo(-38, 12); ctx.lineTo(6, 12); ctx.lineTo(6, 32); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+// blades: [{ text, dir: [dx, dz], color }], top to bottom
+export function addSignpost(x, z, blades) {
+  const g = new THREE.Group();
+  const poleH = 1.7 + blades.length * BLADE_GAP;
+  const pole = box(0.14, poleH, 0.14, COLORS.ink, 0.04);
+  pole.position.y = poleH / 2;
+  g.add(pole);
+  blades.forEach(({ text, dir: [dx, dz], color }, i) => {
+    const d = new THREE.Vector3(dx, 0, dz).applyQuaternion(toCamera);
+    const angle = Math.atan2(d.y, d.x);
+    const right = d.x >= 0;
+    const y = poleH - 0.45 - i * BLADE_GAP;
+    const side = (right ? 1 : -1) * (BLADE_W / 2 - 0.25);
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(BLADE_W, BLADE_H),
+      new THREE.MeshStandardMaterial({ map: bladeTexture(text, color, angle, right), roughness: 0.8, transparent: true }));
+    face.position.set(side, y, 0.11);
+    const back = box(BLADE_W + 0.08, BLADE_H + 0.08, 0.06, COLORS.ink, 0.03);
+    back.position.set(side, y, 0.06);
+    g.add(face, back);
+  });
+  g.position.set(x, 0, z);
+  g.rotation.y = FACE;
+  scene.add(shadowed(g));
+  staticBody(new CANNON.Cylinder(0.12, 0.12, poleH, 8), [x, poleH / 2, z]);
 }
 
 // Basketball with seams

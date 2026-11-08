@@ -8,7 +8,7 @@ import { createSoccer } from './soccer.js';
 import {
   COLORS, FACE, scene, groundMat, sync, staticBody, mat, shadowed, box, canvasTexture
 } from './core.js';
-import { makeSign, placeSign, makeTree, addCone, labelTexture, floorText } from './props.js';
+import { makeSign, placeSign, addSignpost, makeTree, addCone, labelTexture, floorText } from './props.js';
 import { makePad } from './pads.js';
 import { buildJump } from './jump.js';
 import { buildCourt } from './hoops.js';
@@ -243,6 +243,15 @@ export async function buildWorld() {
   scene.add(heartMesh);
   staticBody(new CANNON.Box(new CANNON.Vec3(1.5, 1.5, 0.6)), [-4, 1.5, 22], FACE);
   floorText('family', -4 + Math.sin(FACE) * 3, 22 + Math.cos(FACE) * 3, 0.55, COLORS.pink);
+
+  // ---- Street signs at the junctions (dir is the world direction to drive) ----
+  const HOOPS = { text: 'Basketball', color: '#e8742c' };
+  const SOCCER = { text: 'Soccer', color: '#3f9b4f' };
+  const RAMP = { text: 'Ramp', color: COLORS.accent };
+  addSignpost(-2.5, 4.5, [{ ...RAMP, dir: [0, 1] }, { ...HOOPS, dir: [-1, 0] }, { ...SOCCER, dir: [-1, 0] }]);
+  addSignpost(-10, -4.5, [{ ...HOOPS, dir: [0, -1] }, { ...SOCCER, dir: [0, -1] }]);
+  addSignpost(-2.5, 26.5, [{ ...RAMP, dir: [-1, 0] }]);
+  addSignpost(-46.5, -4.5, [{ text: 'Coming soon', color: COLORS.ink, dir: [0, -1] }]);
 
   // ---- Link pads ----
   makePad('LinkedIn', 4, -14, '#0a66c2', () => window.open(LINKEDIN, '_blank', 'noopener'));
