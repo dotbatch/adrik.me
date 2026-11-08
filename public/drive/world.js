@@ -13,6 +13,7 @@ import { makePad } from './pads.js';
 import { buildJump } from './jump.js';
 import { buildCourt } from './hoops.js';
 import { VALET, VALET_COLOR, buildValet } from './valet.js';
+import { SITE, SITE_COLOR, buildConstruction } from './construction.js';
 
 const FONT_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json';
 const LINKEDIN = 'https://www.linkedin.com/in/adrik-grigorian/';
@@ -44,6 +45,7 @@ road(2, 30, -60, 30);         // the jump run
 road(-60, 30, -60, 0);        // back round to the main road, closing the loop
 road(-14, 0, -14, -34.5);     // past the court to the soccer pitch
 road(-50, 0, -50, -12);       // into the valet lot
+road(-31, 0, -31, -15);       // into the construction site
 
 // Walls at the edge of the world. The grid is drawn in the shader on world
 // coordinates and only shows within a few metres of the car, so the edge
@@ -188,6 +190,9 @@ export async function buildWorld() {
   // ---- Valet: cars parked outside, swap into one (valet.js) ----
   buildValet();
 
+  // ---- Construction site for whatever comes next (construction.js) ----
+  buildConstruction();
+
   // ---- Life sign + family heart ----
   placeSign(makeSign('Life', [
     'Cars · sports · biking · tech · movies',
@@ -220,6 +225,7 @@ export async function buildWorld() {
   addSignpost(-10, -4.5, [HOOPS, SOCCER]);
   addSignpost(-2.5, 26.5, [RAMP]);
   addSignpost(-46.5, -4.5, [VALET_SIGN]);
+  addSignpost(-34.5, -4.5, [{ text: 'Construction', color: SITE_COLOR, to: [SITE.x, SITE.z] }]);
 
   // ---- Link pads ----
   makePad('LinkedIn', 4, -14, '#0a66c2', () => window.open(LINKEDIN, '_blank', 'noopener'));
@@ -235,6 +241,7 @@ export async function buildWorld() {
     (x > -66 && x < 6 && z > 24 && z < 36) ||          // jump run
     (x > -66 && x < -54 && z > -4 && z < 36) ||        // road back to the main road
     (x > -64 && x < -36 && z > -34 && z < -4) ||       // valet lot + sign
+    (x > -40 && x < -22 && z > -34 && z < -4) ||       // construction site + sign
     (x > -16 && x < 22 && z > -20 && z < 26) ||        // spawn, pads, signs
     (x > -18 && x < -10 && z > -40 && z < -28) ||      // road to the pitch
     soccer.clear(x, z);                                // soccer pitch
