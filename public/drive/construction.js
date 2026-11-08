@@ -5,9 +5,9 @@ import * as CANNON from 'cannon-es';
 import { COLORS, scene, groundMat, sync, staticBody, mat, shadowed, box, canvasTexture } from './core.js';
 import { makeSign, placeSign, addCone } from './props.js';
 
-export const SITE = { x: -48, z: -45, w: 14, d: 14 };   // centre and size (w along x, d along z)
+export const SITE = { x: 2, z: 45, w: 14, d: 14 };       // centre and size (w along x, d along z)
 export const SITE_COLOR = '#f2b631';                    // construction yellow
-const GAP = 5;                                          // opening onto the road on the +z side
+const GAP = 5;                                          // opening onto the jump road on the -z side
 
 const stripes = canvasTexture(256, 64, (ctx, w, h) => {
   ctx.fillStyle = COLORS.paper; ctx.fillRect(0, 0, w, h);
@@ -82,19 +82,19 @@ export function buildConstruction() {
   // Barriers round the edge, leaving a gap where the road comes in
   const STEP = 2.2;
   for (let a = -w / 2 + 1; a <= w / 2 - 1; a += STEP) {
-    if (Math.abs(a) > GAP / 2) addBarrier(cx + a, cz + d / 2, 0);   // road side, either side of the gap
-    addBarrier(cx + a, cz - d / 2, 0);
+    if (Math.abs(a) > GAP / 2) addBarrier(cx + a, cz - d / 2, 0);   // road side, either side of the gap
+    addBarrier(cx + a, cz + d / 2, 0);                               // far side
     addBarrier(cx - w / 2, cz + a, Math.PI / 2);
     addBarrier(cx + w / 2, cz + a, Math.PI / 2);
   }
 
-  buildExcavator(cx - 2, cz - 1, 0.4);   // bucket reaching for the dirt pile
+  buildExcavator(cx - 2, cz + 1, -0.4);   // bucket reaching for the dirt pile
 
   // Low dirt pile: the collider is a blunt cone, so the car bumps up and over it
   const pile = shadowed(new THREE.Mesh(new THREE.ConeGeometry(2.2, 1.2, 9), mat('#a8784f', { flatShading: true })));
-  pile.position.set(cx + 3.5, 0.6, cz - 3.5);
+  pile.position.set(cx + 3.5, 0.6, cz + 3.5);
   scene.add(pile);
-  staticBody(new CANNON.Cylinder(0.3, 2.2, 1.2, 9), [cx + 3.5, 0.6, cz - 3.5]);
+  staticBody(new CANNON.Cylinder(0.3, 2.2, 1.2, 9), [cx + 3.5, 0.6, cz + 3.5]);
 
   // A pallet of concrete blocks to knock over
   const B = { w: 0.8, h: 0.4, d: 0.4 };
@@ -103,7 +103,7 @@ export function buildConstruction() {
       const m = box(B.w, B.h, B.d, '#b5b0a8', 0.03);
       const body = new CANNON.Body({ mass: 0.8, material: groundMat });
       body.addShape(new CANNON.Box(new CANNON.Vec3(B.w / 2, B.h / 2, B.d / 2)));
-      body.position.set(cx + 3, B.h / 2 + row * B.h + 0.01, cz + 2.5 + (i - (2 - row) / 2) * (B.d + 0.02));
+      body.position.set(cx + 3, B.h / 2 + row * B.h + 0.01, cz - 2.5 + (i - (2 - row) / 2) * (B.d + 0.02));
       body.quaternion.setFromEuler(0, Math.PI / 2, 0);
       body.sleepSpeedLimit = 0.2;
       body.sleep();
@@ -111,11 +111,11 @@ export function buildConstruction() {
     }
   }
 
-  for (const [x, z] of [[-1.5, 4.5], [1.5, 4.5], [0, -1], [-2, -4]]) addCone(cx + x, cz + z);
+  for (const [x, z] of [[-1.5, -4.5], [1.5, -4.5], [0, 1], [-2, 4]]) addCone(cx + x, cz + z);
 
   placeSign(makeSign('Under construction', [
     'Something new is being built here.',
     'Check back soon to see what it is.',
     'Feel free to move the barriers.'
-  ], { accent: SITE_COLOR }), cx, cz - d / 2 - 3.5);   // clear of the barriers, short of the world edge
+  ], { accent: SITE_COLOR }), cx, cz + d / 2 + 2);
 }
