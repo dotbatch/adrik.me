@@ -114,6 +114,9 @@ DEPLOYMENT.md        How deploys work; ROADMAP-drive.md for drive-mode plans
 - Layouts must work at phone width (16px gutter, no horizontal scroll)
 - Respect `prefers-reduced-motion` for anything animated
 - 3D and physics: pause rendering when off screen, cap pixel ratio at 2
+- **New drive-mode area = new street sign.** When adding an area or mini game (e.g. a valet with different
+  cars), add a blade pointing to it with `addSignpost` in `world.js`: on the nearest junction's post, and on
+  the spawn post if it's a main attraction. Replace the "Coming soon" blade once that lot is built on
 
 ### Boundaries: Never Modify
 - `.env.deploy` or any credentials
