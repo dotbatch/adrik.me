@@ -73,15 +73,16 @@ function bladeTexture(text, color, angle, right) {
   });
 }
 
-// blades: [{ text, dir: [dx, dz], color }], top to bottom
+// blades: [{ text, to: [x, z], color }], top to bottom. Each arrow aims straight at
+// its destination, which reads better on screen than following the road.
 export function addSignpost(x, z, blades) {
   const g = new THREE.Group();
   const poleH = 1.7 + blades.length * BLADE_GAP;
   const pole = box(0.14, poleH, 0.14, COLORS.ink, 0.04);
   pole.position.y = poleH / 2;
   g.add(pole);
-  blades.forEach(({ text, dir: [dx, dz], color }, i) => {
-    const d = new THREE.Vector3(dx, 0, dz).applyQuaternion(toCamera);
+  blades.forEach(({ text, to: [tx, tz], color }, i) => {
+    const d = new THREE.Vector3(tx - x, 0, tz - z).applyQuaternion(toCamera);
     const angle = Math.atan2(d.y, d.x);
     const right = d.x >= 0;
     const y = poleH - 0.45 - i * BLADE_GAP;
