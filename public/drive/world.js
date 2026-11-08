@@ -6,12 +6,13 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { createSoccer } from './soccer.js';
 import {
-  COLORS, FACE, scene, groundMat, sync, staticBody, mat, shadowed, box, canvasTexture
+  COLORS, FACE, scene, groundMat, sync, staticBody, mat, shadowed, box
 } from './core.js';
 import { makeSign, placeSign, addSignpost, makeTree, addCone, labelTexture, floorText } from './props.js';
 import { makePad } from './pads.js';
 import { buildJump } from './jump.js';
 import { buildCourt } from './hoops.js';
+import { VALET, VALET_COLOR, buildValet } from './valet.js';
 
 const FONT_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json';
 const LINKEDIN = 'https://www.linkedin.com/in/adrik-grigorian/';
@@ -42,7 +43,7 @@ road(2, 0, 2, 30);            // spawn to the jump
 road(2, 30, -60, 30);         // the jump run
 road(-60, 30, -60, 0);        // back round to the main road, closing the loop
 road(-14, 0, -14, -34.5);     // past the court to the soccer pitch
-road(-50, 0, -50, -12);       // into the construction lot
+road(-50, 0, -50, -12);       // into the valet lot
 
 // Walls at the edge of the world. The grid is drawn in the shader on world
 // coordinates and only shows within a few metres of the car, so the edge
@@ -184,42 +185,8 @@ export async function buildWorld() {
   // ---- Traffic cone slalom ----
   for (let i = 0; i < 7; i++) addCone(-34 + (i % 2) * 2.4, 2 + i * 2.6);
 
-  // ---- Under construction: an empty lot at the end of a short road, for whatever comes next ----
-  const LOT = { x: -50, z: -20, w: 20, d: 14 };       // centre and size (w along x, d along z)
-  const dirt = new THREE.Mesh(new THREE.PlaneGeometry(LOT.w, LOT.d), mat('#c99566'));
-  dirt.rotation.x = -Math.PI / 2;
-  dirt.position.set(LOT.x, 0.012, LOT.z);
-  dirt.receiveShadow = true;
-  scene.add(dirt);
-
-  // Striped barriers all the way round, so it's closed off until there's something to see
-  const stripes = canvasTexture(256, 64, (ctx, w, h) => {
-    ctx.fillStyle = COLORS.paper; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = COLORS.accent;
-    for (let x = -h; x < w; x += 64) { ctx.beginPath(); ctx.moveTo(x, h); ctx.lineTo(x + 32, h); ctx.lineTo(x + 32 + h, 0); ctx.lineTo(x + h, 0); ctx.fill(); }
-  });
-  const barrierMat = new THREE.MeshStandardMaterial({ map: stripes, roughness: 0.7 });
-  const BARRIER = 3.2;
-  const barrier = (x, z, rotY) => {
-    const m = shadowed(new THREE.Mesh(new RoundedBoxGeometry(BARRIER, 0.5, 0.25, 2, 0.05), barrierMat));
-    m.position.set(x, 0.8, z);
-    m.rotation.y = rotY;
-    for (const s of [-1, 1]) {
-      const leg = box(0.12, 0.8, 0.5, COLORS.ink, 0.03);
-      leg.position.set(s * (BARRIER / 2 - 0.3), -0.4, 0);
-      m.add(shadowed(leg));
-    }
-    scene.add(m);
-    staticBody(new CANNON.Box(new CANNON.Vec3(BARRIER / 2, 0.55, 0.25)), [x, 0.55, z], rotY);
-  };
-  for (const sz of [-1, 1]) for (let i = 0; i < 6; i++) barrier(LOT.x - LOT.w / 2 + BARRIER * (i + 0.5) + 0.4, LOT.z + sz * LOT.d / 2, 0);
-  for (const sx of [-1, 1]) for (let i = 0; i < 4; i++) barrier(LOT.x + sx * LOT.w / 2, LOT.z - LOT.d / 2 + BARRIER * (i + 0.5) + 0.6, Math.PI / 2);
-
-  placeSign(makeSign('Under construction 🚧', [
-    'More of my world is coming here.',
-    'Check back soon.'
-  ], { accent: COLORS.accent }), LOT.x - 2, LOT.z - 2);
-  for (const [x, z] of [[-44, -16], [-45.5, -22], [-56, -17]]) addCone(x, z);
+  // ---- Valet: cars parked outside, swap into one (valet.js) ----
+  buildValet();
 
   // ---- Life sign + family heart ----
   placeSign(makeSign('Life', [
@@ -248,10 +215,11 @@ export async function buildWorld() {
   const HOOPS = { text: 'Basketball', color: '#e8742c', to: [-14, -24] };   // court centre
   const SOCCER = { text: 'Soccer', color: '#3f9b4f', to: [-14, -46] };      // pitch centre
   const RAMP = { text: 'Ramp', color: COLORS.accent, to: [-19, 30] };       // take-off
-  addSignpost(-2.5, 4.5, [RAMP, HOOPS, SOCCER]);
+  const VALET_SIGN = { text: 'Valet', color: VALET_COLOR, to: [VALET.x, VALET.z] };
+  addSignpost(-2.5, 4.5, [RAMP, HOOPS, SOCCER, VALET_SIGN]);
   addSignpost(-10, -4.5, [HOOPS, SOCCER]);
   addSignpost(-2.5, 26.5, [RAMP]);
-  addSignpost(-46.5, -4.5, [{ text: 'Coming soon', color: COLORS.ink, to: [LOT.x, LOT.z] }]);
+  addSignpost(-46.5, -4.5, [VALET_SIGN]);
 
   // ---- Link pads ----
   makePad('LinkedIn', 4, -14, '#0a66c2', () => window.open(LINKEDIN, '_blank', 'noopener'));
@@ -266,7 +234,7 @@ export async function buildWorld() {
     (x > -40 && x < -18 && z > -8 && z < 30) ||        // stack + cones
     (x > -66 && x < 6 && z > 24 && z < 36) ||          // jump run
     (x > -66 && x < -54 && z > -4 && z < 36) ||        // road back to the main road
-    (x > -64 && x < -36 && z > -31 && z < -4) ||       // construction lot
+    (x > -64 && x < -36 && z > -34 && z < -4) ||       // valet lot + sign
     (x > -16 && x < 22 && z > -20 && z < 26) ||        // spawn, pads, signs
     (x > -18 && x < -10 && z > -40 && z < -28) ||      // road to the pitch
     soccer.clear(x, z);                                // soccer pitch

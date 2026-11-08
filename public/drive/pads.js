@@ -39,6 +39,11 @@ const prompt = document.getElementById('prompt');
 const promptBtn = document.getElementById('prompt-btn');
 promptBtn.addEventListener('click', () => activePad && activePad.action());
 
+// For pads whose action changes their own prompt while you're still on them
+export function refreshPrompt() {
+  if (activePad) promptBtn.textContent = activePad.promptText;
+}
+
 export function dismissPad() {
   prompt.classList.remove('is-visible');
   activePad = null;

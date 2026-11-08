@@ -46,38 +46,88 @@ for (const [x, y, z] of WHEEL_POS) {
 }
 vehicle.addToWorld(world);
 
-// Car body visuals (front faces -x)
-export const carMesh = new THREE.Group();
-const carBody = box(2.3, 0.5, 1.2, COLORS.car, 0.2);
-carBody.position.y = 0.05;
-const cabin = box(1.15, 0.46, 1.02, COLORS.paper, 0.18);
-cabin.position.set(0.18, 0.5, 0);
-const windshield = box(0.06, 0.34, 0.9, COLORS.ink, 0.03);
-windshield.position.set(-0.4, 0.52, 0);
-windshield.rotation.z = -0.35;
-const stripe = box(2.32, 0.08, 0.3, COLORS.paper, 0.04);
-stripe.position.set(0, 0.31, 0);
-carMesh.add(carBody, cabin, windshield, stripe);
-for (const z of [0.4, -0.4]) {
-  const lamp = box(0.06, 0.12, 0.24, '#fff4c2', 0.03);
-  lamp.material = new THREE.MeshStandardMaterial({ color: '#fff4c2', emissive: '#ffe08a', emissiveIntensity: 0.6 });
-  lamp.position.set(-1.16, 0.1, z);
-  const tail = box(0.06, 0.1, 0.24, '#ff3b3b', 0.03);
-  tail.position.set(1.16, 0.12, z);
-  carMesh.add(lamp, tail);
+// ---------------------------------------------------------------------------
+// Car bodies (front faces -x). The valet swaps between them; they all share
+// the same physics, only the look changes.
+// ---------------------------------------------------------------------------
+function part(g, w, h, d, color, r, x, y, z, rotZ = 0) {
+  const m = box(w, h, d, color, r);
+  m.position.set(x, y, z);
+  m.rotation.z = rotZ;
+  g.add(m);
 }
-carMesh.children.forEach((c) => { c.position.y += COM_DROP; });
-shadowed(carMesh);
-scene.add(carMesh);
+const headlampMat = new THREE.MeshStandardMaterial({ color: '#fff4c2', emissive: '#ffe08a', emissiveIntensity: 0.6 });
+function lamps(g, halfLen, y) {
+  for (const z of [0.4, -0.4]) {
+    const lamp = box(0.06, 0.12, 0.24, '#fff4c2', 0.03);
+    lamp.material = headlampMat;
+    lamp.position.set(-halfLen, y, z);
+    g.add(lamp);
+    part(g, 0.06, 0.1, 0.24, '#ff3b3b', 0.03, halfLen, y + 0.02, z);
+  }
+}
+const GLASS = COLORS.ink;
+export const CARS = [
+  { name: 'coupe', build(g) {
+    part(g, 2.3, 0.5, 1.2, COLORS.car, 0.2, 0, 0.05, 0);
+    part(g, 1.15, 0.46, 1.02, COLORS.paper, 0.18, 0.18, 0.5, 0);
+    part(g, 0.06, 0.34, 0.9, GLASS, 0.03, -0.4, 0.52, 0, -0.35);
+    part(g, 2.32, 0.08, 0.3, COLORS.paper, 0.04, 0, 0.31, 0);
+    lamps(g, 1.16, 0.1);
+  } },
+  { name: 'pickup', build(g) {
+    part(g, 2.4, 0.5, 1.24, '#d9452b', 0.16, 0, 0.05, 0);
+    part(g, 0.9, 0.56, 1.1, '#d9452b', 0.14, -0.15, 0.55, 0);
+    part(g, 0.06, 0.34, 0.94, GLASS, 0.03, -0.62, 0.6, 0, -0.25);
+    for (const z of [0.57, -0.57]) part(g, 1.05, 0.24, 0.1, '#b8361f', 0.04, 0.65, 0.4, z);   // bed sides
+    part(g, 0.1, 0.24, 1.24, '#b8361f', 0.04, 1.15, 0.4, 0);                                // tailgate
+    lamps(g, 1.21, 0.1);
+  } },
+  { name: 'sports car', build(g) {
+    part(g, 2.45, 0.38, 1.26, '#f2b631', 0.16, 0, -0.02, 0);
+    part(g, 1.0, 0.3, 0.98, GLASS, 0.14, 0.2, 0.3, 0);
+    part(g, 0.3, 0.06, 1.24, COLORS.ink, 0.03, 1.08, 0.55, 0);                              // spoiler
+    for (const z of [0.42, -0.42]) part(g, 0.06, 0.22, 0.06, COLORS.ink, 0.02, 1.08, 0.4, z);
+    lamps(g, 1.23, 0.02);
+  } },
+  { name: 'van', build(g) {
+    part(g, 2.3, 0.55, 1.2, COLORS.teal, 0.18, 0, 0.08, 0);
+    part(g, 1.75, 0.55, 1.12, COLORS.teal, 0.16, 0.22, 0.6, 0);
+    part(g, 1.5, 0.2, 1.14, GLASS, 0.06, 0.32, 0.68, 0);                                     // side windows
+    part(g, 0.06, 0.36, 0.96, GLASS, 0.03, -0.66, 0.62, 0, -0.3);
+    for (const x of [0, 0.6]) part(g, 0.06, 0.06, 1.0, COLORS.ink, 0.02, x, 0.93, 0);         // roof rack
+    lamps(g, 1.16, 0.12);
+  } }
+];
+
+export function makeCarBody(style) {
+  const g = new THREE.Group();
+  style.build(g);
+  g.children.forEach((c) => { c.position.y += COM_DROP; });
+  return shadowed(g);
+}
 
 const wheelGeo = new THREE.CylinderGeometry(0.34, 0.34, 0.26, 24);
 wheelGeo.rotateX(Math.PI / 2); // axle along z, like the physics wheels
-const wheelMeshes = vehicle.wheelInfos.map(() => {
+const hubGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.28, 12).rotateX(Math.PI / 2);
+export function makeWheel() {
   const w = new THREE.Group();
-  w.add(new THREE.Mesh(wheelGeo, mat(COLORS.ink)));
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.28, 12).rotateX(Math.PI / 2), mat('#d9d4cc'));
-  w.add(hub);
-  shadowed(w);
+  w.add(new THREE.Mesh(wheelGeo, mat(COLORS.ink)), new THREE.Mesh(hubGeo, mat('#d9d4cc')));
+  return shadowed(w);
+}
+
+export const carMesh = new THREE.Group();
+scene.add(carMesh);
+export let carStyle = null;
+export function setCarStyle(style) {
+  carMesh.clear();
+  carMesh.add(makeCarBody(style));
+  carStyle = style;
+}
+setCarStyle(CARS[0]);
+
+const wheelMeshes = vehicle.wheelInfos.map(() => {
+  const w = makeWheel();
   scene.add(w);
   return w;
 });
