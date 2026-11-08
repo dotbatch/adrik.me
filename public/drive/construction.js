@@ -5,9 +5,9 @@ import * as CANNON from 'cannon-es';
 import { COLORS, scene, groundMat, sync, staticBody, mat, shadowed, box, canvasTexture } from './core.js';
 import { makeSign, placeSign, addCone } from './props.js';
 
-export const SITE = { x: -31, z: -22, w: 14, d: 14 };   // centre and size (w along x, d along z)
+export const SITE = { x: -48, z: -45, w: 14, d: 14 };   // centre and size (w along x, d along z)
 export const SITE_COLOR = '#f2b631';                    // construction yellow
-const GAP = 5;                                          // opening onto the road on the north side
+const GAP = 5;                                          // opening onto the road on the +z side
 
 const stripes = canvasTexture(256, 64, (ctx, w, h) => {
   ctx.fillStyle = COLORS.paper; ctx.fillRect(0, 0, w, h);
@@ -82,10 +82,10 @@ export function buildConstruction() {
   // Barriers round the edge, leaving a gap where the road comes in
   const STEP = 2.2;
   for (let a = -w / 2 + 1; a <= w / 2 - 1; a += STEP) {
-    if (Math.abs(a) > GAP / 2) addBarrier(cx + a, cz + d / 2, 0);   // north, either side of the gap
-    addBarrier(cx + a, cz - d / 2, 0);                               // south
-    addBarrier(cx - w / 2, cz + a, Math.PI / 2);                     // west
-    addBarrier(cx + w / 2, cz + a, Math.PI / 2);                     // east
+    if (Math.abs(a) > GAP / 2) addBarrier(cx + a, cz + d / 2, 0);   // road side, either side of the gap
+    addBarrier(cx + a, cz - d / 2, 0);
+    addBarrier(cx - w / 2, cz + a, Math.PI / 2);
+    addBarrier(cx + w / 2, cz + a, Math.PI / 2);
   }
 
   buildExcavator(cx - 2, cz - 1, 0.4);   // bucket reaching for the dirt pile
@@ -117,5 +117,5 @@ export function buildConstruction() {
     'Something new is being built here.',
     'Check back soon to see what it is.',
     'Feel free to move the barriers.'
-  ], { accent: SITE_COLOR }), cx, cz - d / 2 - 2);
+  ], { accent: SITE_COLOR }), cx, cz - d / 2 - 3.5);   // clear of the barriers, short of the world edge
 }
