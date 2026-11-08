@@ -18,6 +18,7 @@ Status key: ✅ shipped · 🚧 in progress · 🔜 next · 💡 idea
 - Ramp with a jump, traffic-cone slalom
 - Family heart
 - Valet lot with parked cars (pickup, sports car, van) you can swap into (`valet.js`)
+- Under-construction site with an excavator, dirt pile and knock-over barriers (`construction.js`)
 - Street signposts at the junctions pointing to each area
 - Link pads for LinkedIn and back to adrik.me
 - Keyboard and touch controls, auto-flip, reset

@@ -102,7 +102,7 @@ public/              Everything that ships to the host
   assets/img/        Images, favicon, og-card
   drive/             Drivable world, linked from the nav: drive.js (keyboard and frame loop), core.js
                      (renderer, physics, helpers), car, input, world, props, pads, jump, hoops, soccer,
-                     valet
+                     valet, construction
   .htaccess          HTTPS, caching (HTML/CSS/JS revalidate), security headers
 scripts/deploy.ps1   Manual FTP deploy
 .github/workflows/   Automatic deploy
